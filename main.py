@@ -3,7 +3,14 @@
 Invokes the full pipeline: PM Agent → Architect Agent → Developer Agent → QA Agent → Reviewer Agent → DevOps Agent.
 """
 
+import os
 import sys
+
+# Ensure the project root directory is in sys.path
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+if SCRIPT_DIR not in sys.path:
+    sys.path.insert(0, SCRIPT_DIR)
+
 from dotenv import load_dotenv
 load_dotenv()
 

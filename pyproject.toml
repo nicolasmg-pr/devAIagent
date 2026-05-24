@@ -20,3 +20,6 @@ dependencies = [
 [project.scripts]
 devAIteam = "main:main"
 
+[tool.setuptools]
+py-modules = ["main"]
+
