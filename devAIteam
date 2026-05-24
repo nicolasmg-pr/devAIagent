@@ -1,0 +1,8 @@
+#!/bin/bash
+# Expose the virtual environment python pipeline runner under the direct 'devAIteam' command
+
+# Get the directory where this script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+# Run main.py with the local virtual environment, passing all command-line arguments
+exec "$SCRIPT_DIR/.venv/bin/python" "$SCRIPT_DIR/main.py" "$@"
