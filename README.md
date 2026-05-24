@@ -1,18 +1,18 @@
 # devAIteam 🚀
-### El equipo virtual de desarrollo de software autónomo y local más avanzado
+### The most advanced autonomous, local AI software development team platform
 
-`devAIteam` es una plataforma multi-agente construida sobre **LangGraph** y optimizada para ejecutarse en local con modelos de lenguaje híbridos (como **Qwen3.6-35B** vía MLX u Ollama). La plataforma simula un equipo completo de desarrollo de software que colabora de manera secuencial y en paralelo para transformar un requerimiento de usuario en código real, testeado, validado por humanos y listo para desplegar.
+`devAIteam` is a state-of-the-art multi-agent platform built on top of **LangGraph** and optimized to run 100% locally with hybrid-thinking language models (such as **Qwen3.6-35B** via MLX or Ollama). The platform orchestrates an entire virtual software development team that collaborates sequentially and in parallel to transform a simple user requirement into real, fully-tested, human-reviewed, production-ready code.
 
 ---
 
-## 🏛️ Arquitectura del Pipeline Multi-Agente
+## 🏛️ Multi-Agent Pipeline Architecture
 
-El flujo del equipo sigue el ciclo de vida de desarrollo de software (SDLC) tradicional de forma automatizada:
+The virtual team's workflow follows the traditional Software Development Life Cycle (SDLC) in an automated, highly-structured manner:
 
 ```mermaid
 graph TD
-  User([Usuario / CLI]) -->|Requerimiento| PM[📋 PM Agent]
-  PM -->|Historias de Usuario / US| Arch[🏗️ Architect Agent]
+  User([User / CLI]) -->|Requirement| PM[📋 PM Agent]
+  PM -->|User Stories / US| Arch[🏗️ Architect Agent]
   Arch -->|Clean Architecture / DB / API| UI[🎨 UI Designer Agent]
   UI -->|Stitch Mockups & CSS| Dev[💻 Developer Agents]
   
@@ -32,112 +32,112 @@ graph TD
   QA -->|Test & Score 0-100| Rev[👁️ Reviewer Agent]
   
   subgraph Human-in-the-Loop Interruption
-    Rev -->|Ronda de Code Review| HITL{¿Aprobar cambios?}
-    HITL -->|Rechazar y Retroalimentar| Rev
+    Rev -->|Code Review Round| HITL{Approve changes?}
+    HITL -->|Reject and Feed Back| Rev
   end
   
-  HITL -->|Aprobar y Finalizar| DevOps[🚀 DevOps Agent]
-  DevOps -->|Docker Compose / Local Preview| Registry[(💾 Registro Central)]
+  HITL -->|Approve and Finalize| DevOps[🚀 DevOps Agent]
+  DevOps -->|Docker Compose / Local Preview| Registry[(💾 Central Registry)]
   Registry -->|deploy| Deploy[☁️ Deploy Agent]
 ```
 
 ---
 
-## 🌟 Características Principales
+## 🌟 Key Features
 
-1. **Equipo Virtual Completo**: 8 roles de agentes especializados que colaboran coordinadamente.
-2. **Human-in-the-Loop Real**: El agente *Code Reviewer* realiza una revisión exhaustiva, propone parches de código exactos e interrumpe la ejecución esperando aprobación o feedback del usuario para iniciar rondas de refinamiento.
-3. **Vista Previa Local Inteligente**: El agente *DevOps* levanta contenedores locales con `docker-compose` (NestJS + Nginx + PostgreSQL) o procesos locales en background (Node + Flutter), con fallback a instrucciones detalladas por LLM si el entorno carece de herramientas.
-4. **CLI Multiuso Potente**: Accede a toda la suite mediante el comando ejecutable nativo `devAIteam` para generar, listar, desplegar o limpiar proyectos.
-5. **Registro de Proyectos Centralizado**: Seguimiento en tiempo real del tamaño del código, puntajes de calidad QA, URLs de Pull Requests y estado de despliegue en `./output/.registry.json`.
-6. **Gestión de Despliegue en la Nube**: Despliegues simplificados de tus proyectos en **Fly.io**, **Railway** y **Render** en base a las herramientas detectadas automáticamente.
-7. **Borrado Seguro (Modos Soft & Total)**: Elimina el código local para liberar almacenamiento en disco, o realiza un borrado total interactuando de forma real con el **GitHub MCP** para cerrar PRs, ramas y repositorios.
-
----
-
-## 🛠️ Roles del Equipo
-
-* **📋 Product Manager (PM Agent)**: Analiza el requerimiento del usuario y define las historias de usuario con prioridades y puntos de historia estimados.
-* **🏗️ Software Architect (Architect Agent)**: Diseña la topología de la aplicación (Clean Architecture), endpoints de la API, modelo entidad-relación y diagramas Mermaid con soporte del Context7 MCP.
-* **🎨 UI/UX Designer (Designer Agent)**: Integra sistemas de diseño y pantallas móviles interactivas haciendo uso de la API real de Google Stitch.
-* **💻 Developers (Backend & Frontend Agents)**: Escriben en paralelo el código NestJS (TypeScript) y Flutter (Dart) de forma completa, estructurada y sin placeholders utilizando el Filesystem MCP.
-* **🧪 QA Agent (Test & Quality Auditor)**: Audita la seguridad/calidad (puntuación de 0 a 100) y autogenera suites físicas de pruebas Jest y tests unitarios Dart.
-* **👁️ Tech Lead / Code Reviewer (Reviewer Agent)**: Revisa el código del desarrollador y del QA, propone cambios interactivos y solicita aprobación humana con integración real de GitHub MCP.
-* **🚀 DevOps Engineer (DevOps Agent)**: Configura Docker, automatiza el preview de la aplicación y la integra con el navegador del desarrollador.
-* **☁️ Cloud Deployer (Deploy Agent)**: Compila y empaqueta las configuraciones de lanzamiento en la nube de forma transparente.
+1. **Complete Virtual Team**: 8 specialized agent roles collaborating seamlessly to build your application.
+2. **Real Human-in-the-Loop**: The *Code Reviewer* conducts a meticulous code audit, proposes exact patch snippets, and pauses execution waiting for human approval or feedback to trigger refinement rounds.
+3. **Smart Local Preview**: The *DevOps Agent* automatically provisions a local stack with `docker-compose` (NestJS + Nginx + PostgreSQL) or runs local background processes (Node + Flutter), falling back gracefully to LLM-generated instructions if tools are missing.
+4. **Powerful Multi-command CLI**: Control the entire suite using the native `devAIteam` executable command to generate, list, deploy, or clean up projects.
+5. **Centralized Project Registry**: Real-time tracking of code file counts, QA quality scores, GitHub Pull Request URLs, local folder sizes, and cloud deploy status under `./output/.registry.json`.
+6. **Cloud Deployment Integration**: Direct deployments of your projects to **Fly.io**, **Railway**, and **Render** based on automatically detected local tools.
+7. **Safe Cleanups (Soft & Total Modes)**: Remove local code folders to free up disk space, or perform a total deletion that connects with the **GitHub MCP** to close PRs, delete heads/branches, and clean up repos automatically.
 
 ---
 
-## 📦 Instalación y Configuración
+## 🛠️ Virtual Agent Roles
 
-### Requisitos Previos
-* **Python 3.12** o superior
-* **uv** (Gestor de paquetes ultra-rápido de Python)
-* Servidor local **MLX** o **Ollama** activo en `http://localhost:8000/v1` con el modelo `Qwen3.6-35B-A3B-UD-MLX-4bit`.
+* **📋 Product Manager (PM Agent)**: Analyzes user requirements and drafts detailed User Stories with priority levels and story point estimations.
+* **🏗️ Software Architect (Architect Agent)**: Designs the project topology (Clean Architecture), API REST endpoints, Entity-Relationship database models, and Mermaid diagrams with Context7 MCP support.
+* **🎨 UI/UX Designer (Designer Agent)**: Formulates design systems and interactive screens utilizing the Google Stitch API.
+* **💻 Developers (Backend & Frontend Agents)**: Write parallel, complete, and functional NestJS (TypeScript) and Flutter (Dart) source files with no placeholders, powered by the Filesystem MCP.
+* **🧪 QA Agent (Test & Quality Auditor)**: Audits security/reliability (presents a 0 to 100 quality score) and autogenerates robust unit and widget test files.
+* **👁️ Tech Lead / Code Reviewer (Reviewer Agent)**: Reviews the source code and QA outputs, manages human approvals, and commits refinement parches via the GitHub MCP.
+* **🚀 DevOps Engineer (DevOps Agent)**: Manages local Docker environments, orchestrates browser previews, and manages startup verification.
+* **☁️ Cloud Deployer (Deploy Agent)**: Packages deployment configurations and scripts for instant cloud launch.
 
-### Paso 1: Clonar e instalar dependencias
+---
+
+## 📦 Installation and Setup
+
+### Prerequisites
+* **Python 3.12** or higher.
+* **uv** (An ultra-fast Python package installer).
+* Local **MLX** or **Ollama** server running at `http://localhost:8000/v1` with the model `Qwen3.6-35B-A3B-UD-MLX-4bit` active.
+
+### Step 1: Clone and Install Dependencies
 ```bash
 git clone https://github.com/nicolasmg-pr/devAIagent.git
 cd devAIagent
 uv sync
 ```
 
-### Paso 2: Configurar Variables de Entorno
-Crea o edita tu archivo `.env` en la raíz del proyecto para habilitar los accesos de tus agentes virtuales (el archivo está protegido en `.gitignore`):
+### Step 2: Configure Environment Variables
+Create or modify your `.env` file in the project root to enable credentials for your virtual agents (this file is securely protected in `.gitignore`):
 
 ```env
-# Tokens de Despliegue Cloud (Opcionales)
-FLY_API_TOKEN=tu_token_de_fly
-RAILWAY_TOKEN=tu_token_de_railway
-RENDER_API_KEY=tu_clave_api_de_render
+# Cloud Deploy Tokens (Optional)
+FLY_API_TOKEN=your_fly_token_here
+RAILWAY_TOKEN=your_railway_token_here
+RENDER_API_KEY=your_render_api_key_here
 
-# Integración con GitHub (Recomendado para Code Review & RM)
+# GitHub Integrations (Highly Recommended for Code Review & RM commands)
 GITHUB_OWNER=nicolasmg-pr
 GITHUB_REPO=devAIagent
-GITHUB_PERSONAL_ACCESS_TOKEN=tu_token_pat_de_github
+GITHUB_PERSONAL_ACCESS_TOKEN=your_github_pat_token
 
-# Key de Google Stitch (Opcional para UI Designer)
-STITCH_API_KEY=tu_clave_api_de_stitch
+# Google Stitch Keys (Optional for UI Designer)
+STITCH_API_KEY=your_stitch_api_key_here
 ```
 
-### Paso 3: Activar y utilizar el CLI
-Activa tu entorno virtual:
+### Step 3: Activate and Use the CLI
+Activate your virtual environment:
 ```bash
 source .venv/bin/activate
 ```
-¡El comando `devAIteam` ya está registrado globalmente en tu terminal!
+The **`devAIteam`** command is now fully registered in your shell!
 
 ---
 
-## 🎮 Guía de Uso del CLI
+## 🎮 CLI Usage Guide
 
-### 1. Iniciar un Nuevo Proyecto de Software
-Para iniciar el pipeline y construir una aplicación desde cero:
+### 1. Initiate a New Project
+To start the pipeline and generate an application from scratch:
 ```bash
-devAIteam "Quiero una app móvil para gestionar recetas de cocina y menús semanales"
+devAIteam "I want a mobile app to manage cooking recipes and weekly nutritional menus"
 ```
-*Si ejecutas `devAIteam` sin argumentos, se desplegará el menú interactivo solicitándote los datos.*
+*If you run `devAIteam` with no arguments, a gorgeous Unicode dashboard will load and prompt you for the project description interactively.*
 
-### 2. Listar Proyectos Generados
-Obtén un resumen estructurado en formato tabular de todos tus proyectos, puntajes de calidad, tamaños en disco y URLs:
+### 2. List Generated Projects
+Get a beautifully formatted table representing all generated projects, scores, folder sizes, and links:
 ```bash
 devAIteam list
 ```
 
-### 3. Desplegar en la Nube
-Despliega el proyecto local seleccionado directamente en Fly.io, Railway o Render:
+### 3. Deploy to the Cloud
+Deploy your selected local project to Fly.io, Railway, or Render instantly:
 ```bash
 devAIteam deploy expensemaster-mobile
 ```
 
-### 4. Borrar Proyecto (Modo Soft)
-Elimina el código local de `./output/{proyecto}` para liberar espacio en tu disco, manteniendo intactos los recursos en GitHub y tus deploys en la nube:
+### 4. Delete Project (Soft Mode)
+Safely deletes the local directory `./output/{project}` to free up disk space, keeping remote repositories and deployments intact:
 ```bash
 devAIteam rm expensemaster-mobile
 ```
 
-### 5. Borrado Completo y Seguro (Modo Total)
-Detiene los servicios, elimina el código local, borra la entrada del registro y se conecta mediante GitHub MCP para cerrar la Pull Request abierta y eliminar la rama refinements de forma automática:
+### 5. Deletion of All Resources (Total Mode)
+Stops containers, purges the local folder, cleans the index in `.registry.json`, and triggers the **GitHub MCP** to close pull requests and delete repository branches automatically:
 ```bash
 devAIteam rm expensemaster-mobile --all
 ```
