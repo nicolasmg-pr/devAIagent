@@ -26,18 +26,18 @@ class UIDesignerOutput(BaseModel):
 
 # ── Prompts ────────────────────────────────────────────────────────────────────
 
-UIDESIGNER_SYSTEM_PROMPT = """Eres el UI Designer Agent del equipo de desarrollo.
-Tu trabajo es utilizar las herramientas de Google Stitch (disponibles a través de funciones) para generar las pantallas y el sistema de diseño del proyecto basándote en la arquitectura propuesta.
+UIDESIGNER_SYSTEM_PROMPT = """You are the UI Designer Agent of the development team.
+Your job is to use the Google Stitch tools (available via functions) to generate the screens and the design system of the project based on the proposed architecture.
 
-PROCESO A SEGUIR:
-1. Crea un nuevo proyecto en Google Stitch (create_project) o usa uno existente.
-2. Genera el sistema de diseño (create_design_system_from_design_md u otra).
-3. Por cada vista necesaria en el frontend de la arquitectura, utiliza 'generate_screen_from_text' o 'create_screen' para construir la UI.
-4. Cuando hayas terminado de generar las pantallas, DEBES generar tu salida final devolviendo UNICAMENTE un objeto JSON estructurado que cumpla con este formato:
+PROCESS TO FOLLOW:
+1. Create a new project in Google Stitch (create_project) or use an existing one.
+2. Generate the design system (create_design_system_from_design_md or another).
+3. For each view required in the frontend of the architecture, use 'generate_screen_from_text' or 'create_screen' to build the UI.
+4. When you have finished generating the screens, you MUST generate your final output by returning ONLY a structured JSON object that conforms to this format:
 
 ```json
 {
-  "project_name": "Nombre",
+  "project_name": "Name",
   "design_system_notes": "...",
   "screens": [
     {
@@ -48,7 +48,7 @@ PROCESO A SEGUIR:
   ]
 }
 ```
-No incluyas texto fuera del JSON final."""
+Do not include any text outside the final JSON."""
 
 # ── Public API ─────────────────────────────────────────────────────────────────
 
@@ -59,9 +59,9 @@ def run_ui_designer_agent(architect_output: ArchitectOutput, stitch_api_key: str
     stitch_client = StitchMCPClient(api_key=stitch_api_key)
     try:
         tools = stitch_client.get_tools()
-        print(f"🔧 [UIDesigner] Cargadas {len(tools)} herramientas de Google Stitch.")
+        print(f"🔧 [UIDesigner] Loaded {len(tools)} Google Stitch tools.")
     except Exception as e:
-        print(f"⚠️ [UIDesigner] Error cargando herramientas de Stitch: {e}. Se ejecutará sin herramientas.")
+        print(f"⚠️ [UIDesigner] Error loading Stitch tools: {e}. Running without tools.")
         tools = []
         
     llm = llm_designer
@@ -71,9 +71,9 @@ def run_ui_designer_agent(architect_output: ArchitectOutput, stitch_api_key: str
     arch_json = architect_output.model_dump_json(indent=2)
     
     # Combine the system prompt with the human message as the first prompt
-    prompt = f"{UIDESIGNER_SYSTEM_PROMPT}\n\nAquí tienes la arquitectura del sistema:\n{arch_json}\n\nUsa las herramientas de Stitch para generar las pantallas, y luego devuelve el JSON estructurado."
+    prompt = f"{UIDESIGNER_SYSTEM_PROMPT}\n\nHere is the system architecture:\n{arch_json}\n\nUse Stitch tools to generate the screens, and then return the structured JSON."
     
-    print("🎨 [UIDesigner] Generando pantallas con Google Stitch...")
+    print("🎨 [UIDesigner] Generating screens with Google Stitch...")
     response = agent.invoke({"messages": [HumanMessage(content=prompt)]}, config={"recursion_limit": 10})
     
     final_message = response["messages"][-1].content
@@ -84,10 +84,10 @@ def run_ui_designer_agent(architect_output: ArchitectOutput, stitch_api_key: str
         data = json_repair.loads(json_str)
         return UIDesignerOutput(**data)
     except Exception as e:
-        print(f"⚠️ [UIDesigner] Error parseando output JSON: {e}")
+        print(f"⚠️ [UIDesigner] Error parsing JSON output: {e}")
         # Fallback empty UI
         return UIDesignerOutput(
             project_name=architect_output.project_name,
-            design_system_notes="No se pudo parsear el output de Stitch.",
+            design_system_notes="Could not parse Stitch output.",
             screens=[]
         )

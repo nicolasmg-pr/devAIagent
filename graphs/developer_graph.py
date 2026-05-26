@@ -52,7 +52,7 @@ class DeveloperState(BaseModel):
 def backend_node(state: DeveloperState) -> dict:
     """Execute the Backend Developer Agent."""
     try:
-        print("   ⚙️  Backend Agent generando código...")
+        print("   ⚙️  Backend Agent generating code...")
         result = run_backend_agent(state.architect_output, state.ui_designer_output)
         return {"backend_output": result}
     except Exception as exc:
@@ -63,7 +63,7 @@ def backend_node(state: DeveloperState) -> dict:
 def frontend_node(state: DeveloperState) -> dict:
     """Execute the Frontend Developer Agent."""
     try:
-        print("   📱 Frontend Agent generando código...")
+        print("   📱 Frontend Agent generating code...")
         result = run_frontend_agent(state.architect_output, state.ui_designer_output)
         return {"frontend_output": result}
     except Exception as exc:
@@ -77,17 +77,17 @@ def merge_node(state: DeveloperState) -> dict:
         return {}
 
     if state.backend_output is None or state.frontend_output is None:
-        return {"error": "Uno o ambos sub-agentes no generaron output."}
+        return {"error": "One or both sub-agents did not generate output."}
 
     project_name = state.architect_output.project_name
 
     integration_notes = [
-        f"Configurar la base URL del backend en el frontend (ej: http://localhost:3000/api/v1)",
-        f"Implementar autenticación JWT: el backend emite tokens, el frontend los almacena con flutter_secure_storage",
-        f"Habilitar CORS en NestJS para permitir peticiones desde la app Flutter",
-        f"Usar variables de entorno (.env) para gestionar URLs y secretos en ambos entornos",
-        f"El backend debe servir respuestas JSON consistentes con los modelos Dart del frontend",
-        f"Implementar interceptors en Flutter (dio) para añadir tokens de auth automáticamente",
+        "Configure the backend base URL in the frontend (e.g., http://localhost:3000/api/v1)",
+        "Implement JWT authentication: the backend issues tokens, the frontend stores them with flutter_secure_storage",
+        "Enable CORS in NestJS to allow requests from the Flutter app",
+        "Use environment variables (.env) to manage URLs and secrets in both environments",
+        "The backend must serve JSON responses consistent with the frontend's Dart models",
+        "Implement interceptors in Flutter (dio) to add auth tokens automatically",
     ]
 
     dev_output = DeveloperOutput(
@@ -104,58 +104,58 @@ def filesystem_node(state: DeveloperState) -> dict:
     """Save generated files to filesystem using MCP or Python fallback."""
     if state.error or state.developer_output is None:
         return {}
-    print("💾 [Filesystem Node] Guardando archivos de desarrollo en el sistema...")
+    print("💾 [Filesystem Node] Saving development files to the system...")
     try:
         _run_async_in_thread(save_files_to_filesystem(state.developer_output))
     except Exception as exc:
-        print(f"⚠️ [Filesystem Node] Error guardando archivos: {exc}")
+        print(f"⚠️ [Filesystem Node] Error saving files: {exc}")
     return {}
 
 
 def format_node(state: DeveloperState) -> dict:
     """Pretty-print the Developer output."""
     if state.error:
-        print(f"\n❌ Error durante la ejecución del Developer Agent:\n{state.error}")
+        print(f"\n❌ Error during Developer Agent execution:\n{state.error}")
         return {}
 
     output = state.developer_output
     if output is None:
-        print("\n⚠️  No se generó output de desarrollo.")
+        print("\n⚠️  No development output was generated.")
         return {}
 
     print("\n" + "=" * 60)
-    print(f"💻 CÓDIGO GENERADO: {output.project_name}")
+    print(f"💻 GENERATED CODE: {output.project_name}")
     print("=" * 60)
 
     # ── Backend ──────────────────────────────────────────────────────
     be = output.backend
-    print(f"\n🔧 BACKEND ({len(be.files)} archivos generados):")
+    print(f"\n🔧 BACKEND ({len(be.files)} files generated):")
     print("-" * 60)
     for f in be.files:
         print(f"   📄 {f.path}/{f.filename} — {f.description}")
-    print(f"\n   📦 Dependencias: {', '.join(be.dependencies)}")
+    print(f"\n   📦 Dependencies: {', '.join(be.dependencies)}")
     print(f"   🚀 Setup:")
     for cmd in be.setup_commands:
         print(f"      $ {cmd}")
 
     # ── Frontend ─────────────────────────────────────────────────────
     fe = output.frontend
-    print(f"\n🎨 FRONTEND ({len(fe.files)} archivos generados):")
+    print(f"\n🎨 FRONTEND ({len(fe.files)} files generated):")
     print("-" * 60)
     for f in fe.files:
         print(f"   📄 {f.path}/{f.filename} — {f.description}")
-    print(f"\n   📦 Dependencias: {', '.join(fe.dependencies)}")
+    print(f"\n   📦 Dependencies: {', '.join(fe.dependencies)}")
     print(f"   🚀 Setup:")
     for cmd in fe.setup_commands:
         print(f"      $ {cmd}")
 
     # ── Integration notes ────────────────────────────────────────────
-    print(f"\n🔗 NOTAS DE INTEGRACIÓN:")
+    print(f"\n🔗 INTEGRATION NOTES:")
     print("-" * 60)
     for i, note in enumerate(output.integration_notes, 1):
         print(f"   {i}. {note}")
 
-    print(f"\n💾 Archivos guardados en: ./output/")
+    print(f"\n💾 Files saved to: ./output/")
     print("\n" + "=" * 60 + "\n")
 
     return {}

@@ -19,7 +19,7 @@ class ServiceStatus(BaseModel):
     url: str
     pid: Optional[int] = None
     error: Optional[str] = None
-    logs_tail: List[str] = Field(default_factory=list, description="Últimas 10 líneas de log")
+    logs_tail: List[str] = Field(default_factory=list, description="Last 10 log lines")
 
 class LocalPreviewOutput(BaseModel):
     project_name: str
@@ -33,12 +33,12 @@ class LocalPreviewOutput(BaseModel):
 # ── Helper for clean YAML extraction ─────────────────────────────────────────
 
 def clean_yaml_response(raw: str) -> str:
-    # Eliminar bloques <think> de Qwen
+    # Remove <think> blocks from Qwen
     cleaned = re.sub(r'<think>.*?</think>', '', raw, flags=re.DOTALL)
     cleaned = re.sub(r'<think>.*$', '', cleaned, flags=re.DOTALL)
     cleaned = cleaned.strip()
     
-    # Intentar extraer bloque de markdown yml/yaml
+    # Try to extract markdown yml/yaml block
     match = re.search(r'```(?:yaml|yml)?\s*(.*?)\s*```', cleaned, re.DOTALL | re.IGNORECASE)
     if match:
         return match.group(1).strip()
@@ -48,28 +48,28 @@ def clean_yaml_response(raw: str) -> str:
 
 def generate_docker_compose(developer_output: DeveloperOutput, project_name: str) -> str:
     """Generate a docker-compose.yml file using the LLM and save it."""
-    print(f"   🐳 [DevOps] Generando docker-compose.yml con Qwen...")
+    print(f"   🐳 [DevOps] Generating docker-compose.yml with Qwen...")
     
     system_prompt = """\
-Eres un DevOps Engineer Senior especialista en Docker, Node.js y Flutter.
-Tu tarea es recibir un resumen del código de un proyecto y generar un archivo docker-compose.yml completo, profesional y funcional.
-El archivo docker-compose.yml debe configurar:
-1. Una base de datos PostgreSQL (con credenciales postgres/postgres).
-2. Un servicio de backend en NestJS expuesto en el puerto 3000 (construyendo desde un Dockerfile o usando una imagen de node con volumen/setup).
-3. Un servicio de frontend en Flutter compilado para web expuesto en el puerto 8080 mediante Nginx.
+You are a Senior DevOps Engineer specializing in Docker, Node.js, and Flutter.
+Your task is to receive a summary of a project's code and generate a complete, professional, and functional docker-compose.yml file.
+The docker-compose.yml file must configure:
+1. A PostgreSQL database (with postgres/postgres credentials).
+2. A NestJS backend service exposed on port 3000 (building from a Dockerfile or using a node image with volume/setup).
+3. A Flutter frontend service compiled for web exposed on port 8080 using Nginx.
 
-Tu respuesta debe ser ÚNICAMENTE el código YAML válido para el archivo docker-compose.yml.
-NO incluyas explicaciones, NO incluyas markdown, NO uses backticks, solo el contenido del YAML puro.
+Your response must ONLY be the valid YAML code for the docker-compose.yml file.
+Do NOT include explanations, do NOT include markdown, do NOT use backticks, only the pure YAML content.
 """
 
     human_prompt = f"""
-Proyecto: {project_name}
-Archivos Backend Generados: {list(f.filename for f in developer_output.backend.files)}
-Archivos Frontend Generados: {list(f.filename for f in developer_output.frontend.files)}
-Dependencias Backend: {developer_output.backend.dependencies}
-Dependencias Frontend: {developer_output.frontend.dependencies}
+Project: {project_name}
+Generated Backend Files: {list(f.filename for f in developer_output.backend.files)}
+Generated Frontend Files: {list(f.filename for f in developer_output.frontend.files)}
+Backend Dependencies: {developer_output.backend.dependencies}
+Frontend Dependencies: {developer_output.frontend.dependencies}
 
-Genera el archivo docker-compose.yml:
+Generate the docker-compose.yml file:
 """
 
     messages = [
@@ -87,9 +87,9 @@ Genera el archivo docker-compose.yml:
     try:
         with open(compose_path, "w", encoding="utf-8") as f:
             f.write(yaml_content)
-        print(f"   ✅ [DevOps] docker-compose.yml guardado en {compose_path}")
+        print(f"   ✅ [DevOps] docker-compose.yml saved in {compose_path}")
     except Exception as e:
-        print(f"   ⚠️  [DevOps] Error guardando docker-compose.yml: {e}")
+        print(f"   ⚠️  [DevOps] Error saving docker-compose.yml: {e}")
         
     return yaml_content
 
@@ -112,7 +112,7 @@ def prepare_local_environment(developer_output: DeveloperOutput, project_name: s
 
     # SIMULATION FOR TESTING: if environment variable SIMULATE_NO_DOCKER is set
     if os.getenv("SIMULATE_NO_DOCKER") == "true":
-        print("   ⚠️  [DevOps Mode Simulado] Forzando simulación de Docker no disponible.")
+        print("   ⚠️  [DevOps Simulated Mode] Forcing simulation: Docker not available.")
         docker_ok = False
 
     return {
@@ -158,9 +158,9 @@ async def run_local_preview(developer_output: DeveloperOutput, project_name: str
             with open(env_path, "w", encoding="utf-8") as f:
                 f.write("PORT=3000\nDATABASE_URL=postgres://postgres:postgres@db:5432/postgres\nJWT_SECRET=supersecret\n")
         except Exception as e:
-            print(f"   ⚠️  [DevOps] No se pudo escribir .env: {e}")
+            print(f"   ⚠️  [DevOps] Could not write .env: {e}")
             
-        print("   🐳 [DevOps Option A] Docker disponible. Levantando contenedores (docker compose up -d --build)...")
+        print("   🐳 [DevOps Option A] Docker available. Starting containers (docker compose up -d --build)...")
         # Check if we should use 'docker compose' or 'docker-compose'
         cmd = ["docker", "compose"]
         if not shutil.which("docker"):
@@ -176,7 +176,7 @@ async def run_local_preview(developer_output: DeveloperOutput, project_name: str
             )
             
             # Polling
-            print("   ⏳ [DevOps] Esperando a que los servicios respondan (máx 60s)...")
+            print("   ⏳ [DevOps] Waiting for services to respond (max 60s)...")
             success = False
             for step in range(20): # 20 attempts * 3s = 60s
                 await asyncio.sleep(3)
@@ -187,12 +187,12 @@ async def run_local_preview(developer_output: DeveloperOutput, project_name: str
                     break
                     
             if success:
-                print("   ✅ [DevOps] Contenedores levantados y respondiendo con éxito!")
+                print("   ✅ [DevOps] Containers started and responding successfully!")
                 preview_ready = True
                 services.append(ServiceStatus(name="backend", status="running", port=3000, url=backend_url))
                 services.append(ServiceStatus(name="frontend", status="running", port=8080, url=frontend_url))
             else:
-                print("   ❌ [DevOps] Error: Los servicios no respondieron dentro de 60s. Obteniendo logs...")
+                print("   ❌ [DevOps] Error: Services did not respond within 60s. Fetching logs...")
                 # Fetch logs
                 logs_res = subprocess.run(cmd + ["logs", "--tail=10"], cwd=out_dir, capture_output=True, text=True)
                 logs_tail = logs_res.stdout.splitlines() if logs_res.stdout else []
@@ -202,7 +202,7 @@ async def run_local_preview(developer_output: DeveloperOutput, project_name: str
                     status="failed",
                     port=3000,
                     url=backend_url,
-                    error="Timeout esperando respuesta del servicio",
+                    error="Timeout waiting for service response",
                     logs_tail=logs_tail
                 ))
                 services.append(ServiceStatus(
@@ -210,17 +210,17 @@ async def run_local_preview(developer_output: DeveloperOutput, project_name: str
                     status="failed",
                     port=8080,
                     url=frontend_url,
-                    error="Timeout esperando respuesta del servicio",
+                    error="Timeout waiting for service response",
                     logs_tail=logs_tail
                 ))
         except Exception as e:
-            print(f"   ⚠️  [DevOps] Excepción ejecutando docker compose: {e}")
+            print(f"   ⚠️  [DevOps] Exception executing docker compose: {e}")
             services.append(ServiceStatus(name="backend", status="failed", port=3000, url=backend_url, error=str(e)))
             services.append(ServiceStatus(name="frontend", status="failed", port=8080, url=frontend_url, error=str(e)))
             
     # OPTION B: Only Node is available
     elif env["node"]:
-        print("   ⚙️  [DevOps Option B] Solo Node.js disponible. Levantando NestJS local...")
+        print("   ⚙️  [DevOps Option B] Only Node.js available. Starting NestJS locally...")
         # Since code files are stored under src/ or backend/, let's check for package.json
         # and start the process.
         # However, to be fully robust and prevent blocking if code doesn't build, we can launch Popen
@@ -233,7 +233,7 @@ async def run_local_preview(developer_output: DeveloperOutput, project_name: str
                 pkg_path = os.path.join(out_dir, "package.json")
                 cwd = out_dir
                 
-            print(f"   🚀 [DevOps] npm install && npm run start:dev en {cwd}...")
+            print(f"   🚀 [DevOps] npm install && npm run start:dev in {cwd}...")
             # We don't want to block the thread forever, so run npm run start in background
             # For robust background running:
             npm_install = subprocess.run(["npm", "install"], cwd=cwd, capture_output=True)
@@ -253,13 +253,13 @@ async def run_local_preview(developer_output: DeveloperOutput, project_name: str
                     break
                     
             if be_active:
-                print("   ✅ [DevOps] Backend NestJS corriendo localmente!")
+                print("   ✅ [DevOps] Backend NestJS running locally!")
                 services.append(ServiceStatus(name="backend", status="running", port=3000, url=backend_url, pid=proc.pid))
                 preview_ready = True
                 
                 # Check frontend with Flutter web compilation
                 if env["flutter"]:
-                    print("   📱 [DevOps] Compilando Flutter Web y sirviendo en puerto 8080...")
+                    print("   📱 [DevOps] Compiling Flutter Web and serving on port 8080...")
                     # Simular build web e http server en background
                     fl_proc = subprocess.Popen(
                         ["python3", "-m", "http.server", "8080"],
@@ -270,11 +270,11 @@ async def run_local_preview(developer_output: DeveloperOutput, project_name: str
                     await asyncio.sleep(2)
                     services.append(ServiceStatus(name="frontend", status="running", port=8080, url=frontend_url, pid=fl_proc.pid))
                 else:
-                    services.append(ServiceStatus(name="frontend", status="skipped", port=8080, url=frontend_url, error="Flutter SDK no disponible"))
+                    services.append(ServiceStatus(name="frontend", status="skipped", port=8080, url=frontend_url, error="Flutter SDK not available"))
             else:
-                print("   ❌ [DevOps] El backend NestJS local no inició a tiempo.")
-                services.append(ServiceStatus(name="backend", status="failed", port=3000, url=backend_url, error="Timeout al levantar NestJS"))
-                services.append(ServiceStatus(name="frontend", status="skipped", port=8080, url=frontend_url, error="Depende del backend fallido"))
+                print("   ❌ [DevOps] Local NestJS backend did not start in time.")
+                services.append(ServiceStatus(name="backend", status="failed", port=3000, url=backend_url, error="Timeout starting NestJS"))
+                services.append(ServiceStatus(name="frontend", status="skipped", port=8080, url=frontend_url, error="Depends on failed backend"))
         except Exception as e:
             print(f"   ⚠️  [DevOps Option B Exception] {e}")
             services.append(ServiceStatus(name="backend", status="failed", port=3000, url=backend_url, error=str(e)))
@@ -282,28 +282,28 @@ async def run_local_preview(developer_output: DeveloperOutput, project_name: str
 
     # OPTION C: Graceful degradation (None available or simulated)
     else:
-        print("   ⚠️  [DevOps Option C] Entorno local no apto para preview automático. Generando docker-compose y manual...")
-        # Generar docker-compose.yml de igual manera para que lo tengan
+        print("   ⚠️  [DevOps Option C] Local environment not suitable for automatic preview. Generating docker-compose and manual guide...")
+        # Generate docker-compose.yml anyway so they have it
         try:
             generate_docker_compose(developer_output, project_name)
             docker_compose_generated = True
         except Exception as e:
-            print(f"   ⚠️  [DevOps] No se pudo autogenerar docker-compose.yml: {e}")
+            print(f"   ⚠️  [DevOps] Could not auto-generate docker-compose.yml: {e}")
             
-        services.append(ServiceStatus(name="backend", status="skipped", port=3000, url=backend_url, error="Docker / Node no disponibles"))
-        services.append(ServiceStatus(name="frontend", status="skipped", port=8080, url=frontend_url, error="Docker / Flutter no disponibles"))
+        services.append(ServiceStatus(name="backend", status="skipped", port=3000, url=backend_url, error="Docker / Node not available"))
+        services.append(ServiceStatus(name="frontend", status="skipped", port=8080, url=frontend_url, error="Docker / Flutter not available"))
         
         # Generar instrucciones manuales con Qwen
-        print("   🧠 [DevOps] Generando guía de setup e instrucciones manuales...")
+        print("   🧠 [DevOps] Generating setup guide and manual instructions...")
         system_prompt = """\
-Eres un DevOps Engineer de élite. Tu rol es explicar detalladamente al usuario cómo puede configurar, \
-construir y ejecutar localmente en su máquina el backend de NestJS, la base de datos PostgreSQL, y el frontend de Flutter Web.
-Sé estructurado y ofrece comandos de consola listos para copiar y pegar.
+You are an elite DevOps Engineer. Your role is to explain in detail to the user how they can configure, \
+build, and run locally on their machine the NestJS backend, the PostgreSQL database, and the Flutter Web frontend.
+Be structured and provide ready-to-copy-and-paste console commands.
 """
         human_prompt = f"""
-Proyecto: {project_name}
-Genera una guía de inicio rápido e instrucciones manuales paso a paso para levantar los servicios locales.
-Backend en NestJS (puerto 3000) y Frontend en Flutter (puerto 8080).
+Project: {project_name}
+Generate a quick start guide and step-by-step manual instructions to spin up local services.
+NestJS Backend (port 3000) and Flutter Frontend (port 8080).
 """
         messages = [
             SystemMessage(content=system_prompt),
@@ -316,7 +316,7 @@ Backend en NestJS (puerto 3000) y Frontend en Flutter (puerto 8080).
             manual_instructions = re.sub(r'<think>.*?</think>', '', response.content, flags=re.DOTALL)
             manual_instructions = re.sub(r'<think>.*$', '', manual_instructions, flags=re.DOTALL).strip()
         except Exception as e:
-            manual_instructions = f"Guía básica:\n1. Instala Docker y Node.js.\n2. Ejecuta 'npm install' y 'npm run start' en el backend.\n3. Ejecuta 'flutter pub get' y 'flutter run -d chrome' en el frontend."
+            manual_instructions = f"Basic Guide:\n1. Install Docker and Node.js.\n2. Run 'npm install' and 'npm run start' in the backend.\n3. Run 'flutter pub get' and 'flutter run -d chrome' in the frontend."
 
     out = LocalPreviewOutput(
         project_name=project_name,
@@ -331,9 +331,9 @@ Backend en NestJS (puerto 3000) y Frontend en Flutter (puerto 8080).
     if preview_ready:
         try:
             url_to_open = frontend_url if frontend_url else backend_url
-            print(f"   🌐 [DevOps] Abriendo preview en el navegador: {url_to_open}")
+            print(f"   🌐 [DevOps] Opening preview in browser: {url_to_open}")
             webbrowser.open(url_to_open)
         except Exception as e:
-            print(f"   ⚠️  [DevOps] No se pudo abrir el navegador automáticamente: {e}")
+            print(f"   ⚠️  [DevOps] Could not automatically open browser: {e}")
             
     return out

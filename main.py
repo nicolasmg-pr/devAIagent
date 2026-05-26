@@ -27,28 +27,28 @@ from langgraph.types import Command
 def main() -> None:
     args = sys.argv[1:]
 
-    # Sin argumentos: mostrar ayuda y pedir requerimiento interactivo
+    # Without arguments: show help and request interactive input
     if not args:
         print("""
   ╔══════════════════════════════════════════════════════╗
   ║                    devAIteam                        ║
-  ║         Tu equipo de desarrollo IA local            ║
+  ║         Your local AI development team             ║
   ╠══════════════════════════════════════════════════════╣
-  ║  GENERAR proyecto:                                  ║
-  ║    devAIteam "describe tu app"                      ║
+  ║  GENERATE project:                                  ║
+  ║    devAIteam "describe your app"                     ║
   ║                                                     ║
-  ║  GESTIONAR proyectos:                               ║
-  ║    devAIteam list                  ver proyectos    ║
-  ║    devAIteam deploy <proyecto>     desplegar        ║
-  ║    devAIteam rm <proyecto>         borrar local     ║
-  ║    devAIteam rm <proyecto> --all   borrar todo      ║
+  ║  MANAGE projects:                                   ║
+  ║    devAIteam list                  list projects    ║
+  ║    devAIteam deploy <project>      deploy project   ║
+  ║    devAIteam rm <project>          delete local     ║
+  ║    devAIteam rm <project> --all    delete all       ║
   ╚══════════════════════════════════════════════════════╝
       """)
-        print("🤖 Describe tu proyecto (o CTRL+C para salir):")
+        print("🤖 Describe your project (or CTRL+C to exit):")
         try:
             requirement = input("> ").strip()
         except (KeyboardInterrupt, EOFError):
-            print("\nOperación cancelada.")
+            print("\nOperation cancelled.")
             return
         if not requirement:
             return
@@ -65,7 +65,7 @@ def main() -> None:
     # devAIteam deploy <project>
     if command == "deploy":
         if len(args) < 2:
-            print("❌ Uso: devAIteam deploy <nombre_proyecto>")
+            print("❌ Usage: devAIteam deploy <project_name>")
             return
         from deploy.deploy_runner import run_deploy_command
         run_deploy_command(args[1])
@@ -74,44 +74,44 @@ def main() -> None:
     # devAIteam rm <project> [--all]
     if command == "rm":
         if len(args) < 2:
-            print("❌ Uso: devAIteam rm <nombre_proyecto> [--all]")
+            print("❌ Usage: devAIteam rm <project_name> [--all]")
             return
         delete_all = "--all" in args
         from deploy.rm_runner import run_rm_command
         run_rm_command(args[1], delete_all=delete_all)
         return
 
-    # Si no es un comando del CLI, se trata del requerimiento original del usuario
+    # If it is not a CLI command, treat it as the user's original requirement
     requirement = " ".join(args)
 
     # ── Stage 1: PM Agent ────────────────────────────────────────────
-    print("🤖 PM Agent ejecutando...")
+    print("🤖 Running PM Agent...")
     pm_result = pm_graph.invoke({"requirement": requirement})
 
     if pm_result.get("error"):
-        print("❌ PM Agent falló. Abortando pipeline.")
+        print("❌ PM Agent failed. Aborting pipeline.")
         return
 
     # ── Stage 2: Architect Agent ─────────────────────────────────────
-    print("\n🏗️  Architect Agent ejecutando...")
+    print("\n🏗️  Running Architect Agent...")
     arch_result = architect_graph.invoke({"pm_output": pm_result["pm_output"]})
 
     if arch_result.get("error"):
-        print("❌ Architect Agent falló. Abortando pipeline.")
+        print("❌ Architect Agent failed. Aborting pipeline.")
         return
 
     # ── Stage 2.5: UI Designer Agent ─────────────────────────────────
-    print("\n🎨 UI Designer Agent ejecutando...")
+    print("\n🎨 Running UI Designer Agent...")
     ui_result = ui_designer_graph.invoke({"architect_output": arch_result["architect_output"]})
 
     if "ui_designer_output" not in ui_result or ui_result["ui_designer_output"] is None:
-        print("⚠️ UI Designer Agent falló o no devolvió output. Continuando sin UI.")
+        print("⚠️ UI Designer Agent failed or did not return output. Continuing without UI.")
         ui_output = None
     else:
         ui_output = ui_result["ui_designer_output"]
 
-    # ── Stage 3: Developer Agent (backend + frontend en paralelo) ────
-    print("\n💻 Developer Agent ejecutando (backend + frontend en paralelo)...")
+    # ── Stage 3: Developer Agent (backend + frontend in parallel) ────
+    print("\n💻 Running Developer Agent (backend + frontend in parallel)...")
     dev_result = developer_graph.invoke(
         {
             "architect_output": arch_result["architect_output"],
@@ -120,22 +120,22 @@ def main() -> None:
     )
 
     if dev_result.get("error"):
-        print("❌ Developer Agent falló. Abortando pipeline.")
+        print("❌ Developer Agent failed. Aborting pipeline.")
         return
 
-    # ── Stage 4: QA Agent (tests + code review en paralelo) ──────────
-    print("\n🧪 QA Agent ejecutando (tests + code review en paralelo)...")
+    # ── Stage 4: QA Agent (tests + code review in parallel) ──────────
+    print("\n🧪 Running QA Agent (tests + code review in parallel)...")
     qa_result = qa_graph.invoke({
         "pm_output": pm_result["pm_output"],
         "developer_output": dev_result["developer_output"],
     })
 
     if qa_result.get("error"):
-        print("❌ QA Agent falló. Abortando pipeline.")
+        print("❌ QA Agent failed. Aborting pipeline.")
         return
 
     # ── Stage 5: Reviewer Agent (Human-in-the-loop) ──────────────────
-    print("\n👁  Code Reviewer ejecutando (con human-in-the-loop)...")
+    print("\n👁  Running Code Reviewer (with human-in-the-loop)...")
     
     # Initialize state
     initial_state = {
@@ -148,22 +148,22 @@ def main() -> None:
     # Loop for human-in-the-loop interruption
     while rev_result and not rev_result.get("final_output"):
         print("┌─────────────────────────────────────────┐")
-        print("│  ¿Apruebas esta revisión?               │")
-        print("│  [a] Aprobar                            │")
-        print("│  [s] Aprobar con sugerencias            │")
-        print("│  [r] Rechazar y pedir nueva ronda       │")
-        print("│  [f] Aprobar y finalizar pipeline       │")
+        print("│  Do you approve this review?            │")
+        print("│  [a] Approve                            │")
+        print("│  [s] Approve with suggestions           │")
+        print("│  [r] Reject and request new round       │")
+        print("│  [f] Approve and finalize pipeline       │")
         print("└─────────────────────────────────────────┘")
         try:
-            user_input = input("Escribe tu opción y feedback opcional: ")
+            user_input = input("Enter your option and optional feedback: ")
         except EOFError:
             # Handle non-interactive environments gracefully
-            user_input = "a Aprobado automáticamente (EOF)"
+            user_input = "a Automatically approved (EOF)"
             
         rev_result = reviewer_graph.invoke(Command(resume=user_input), reviewer_config)
     
     # ── Stage 6: DevOps Agent (Local Preview) ────────────────────────
-    print("\n🚀 DevOps Agent ejecutando — levantando preview local...")
+    print("\n🚀 Running DevOps Agent — spinning up local preview...")
     
     proj_name = dev_result["developer_output"].project_name.lower().replace(" ", "-").replace("_", "-")
     
@@ -176,7 +176,7 @@ def main() -> None:
         devops_res = devops_graph.invoke(initial_devops_state)
         local_preview_output = devops_res.get("local_preview_output")
     except Exception as exc:
-        print(f"⚠️  DevOps Agent falló: {exc}")
+        print(f"⚠️  DevOps Agent failed: {exc}")
         local_preview_output = None
 
     # ── Pipeline data extraction ─────────────────────────────────────
@@ -228,9 +228,9 @@ def main() -> None:
             output_size_mb=size_mb
         )
         save_project(meta)
-        print(f"💾 Metadatos del proyecto '{proj_name}' guardados en el registro central.")
+        print(f"💾 Project metadata for '{proj_name}' successfully saved in central registry.")
     except Exception as exc:
-        print(f"⚠️  No se pudieron guardar los metadatos en el registro central: {exc}")
+        print(f"⚠️  Could not save project metadata in central registry: {exc}")
 
     # MCP Usage determination
     arch_mcp = "Real MCP (Context7)" if getattr(arch_out, "context7_enriched", False) else "Simulated (Fallback)"
@@ -256,19 +256,19 @@ def main() -> None:
         rev_github_mcp = f"Real MCP (GitHub PR: {gh_out.get('pr_url')})"
 
     print("\n╔══════════════════════════════════════════════════════════════════════════╗")
-    print("║                       STATUS PIPELINE COMPLETO ✅                        ║")
+    print("║                        FULL PIPELINE STATUS ✅                           ║")
     print("╠══════════════════════════════════════════════════════════════════════════╣")
-    print(f"║ 📋 PM Agent:       {str(n_stories).ljust(2)} historias de usuario.                                 ║")
-    print(f"║ 🏗️  Architect:      {str(n_endpoints).ljust(2)} endpoints, {str(n_entities).ljust(2)} entidades.                           ║")
+    print(f"║ 📋 PM Agent:       {str(n_stories).ljust(2)} user stories.                                        ║")
+    print(f"║ 🏗️  Architect:      {str(n_endpoints).ljust(2)} endpoints, {str(n_entities).ljust(2)} database entities.                   ║")
     print(f"║    ↳ Context7:     {arch_mcp.ljust(53)} ║")
-    print(f"║ 🎨 Designer:       {str(len(ui_output.screens) if ui_output else 0).ljust(2)} pantallas generadas.                                  ║")
+    print(f"║ 🎨 Designer:       {str(len(ui_output.screens) if ui_output else 0).ljust(2)} screens generated.                                    ║")
     print(f"║    ↳ Stitch:       {design_mcp.ljust(53)} ║")
-    print(f"║ 💻 Developer:      {str(n_dev_files).ljust(2)} archivos código de desarrollo.                       ║")
+    print(f"║ 💻 Developer:      {str(n_dev_files).ljust(2)} code files generated.                                ║")
     print(f"║    ↳ Filesystem:   {dev_mcp.ljust(53)} ║")
     print(f"║ 🧪 QA Agent:       {str(n_tests).ljust(2)} tests, score: {str(qa_score).ljust(3)}/100.                                 ║")
     print(f"║    ↳ Playwright:   {qa_playwright_mcp.ljust(53)} ║")
     print(f"║    ↳ Filesystem:   {qa_fs_mcp.ljust(53)} ║")
-    print(f"║ 👁  Reviewer:      {str(rev_rounds).ljust(2)} rondas, estado final: {rev_status.ljust(24)} ║")
+    print(f"║ 👁  Reviewer:      {str(rev_rounds).ljust(2)} rounds, final status: {rev_status.ljust(25)} ║")
     print(f"║    ↳ GitHub:       {rev_github_mcp[:53].ljust(53)} ║")
     
     devops_val = "Not running"

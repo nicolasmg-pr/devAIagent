@@ -25,9 +25,9 @@ class ThreadSafeMCPClient:
         # Connect synchronously and fetch tools
         try:
             self.raw_tools = self._run_async(self._connect_and_list())
-            print(f"🔌 [MCP] Conectado a {command} {' '.join(args)}. {len(self.raw_tools)} herramientas cargadas.")
+            print(f"🔌 [MCP] Connected to {command} {' '.join(args)}. {len(self.raw_tools)} tools loaded.")
         except Exception as e:
-            print(f"⚠️ [MCP] Error conectando a {command} {' '.join(args)}: {e}")
+            print(f"⚠️ [MCP] Error connecting to {command} {' '.join(args)}: {e}")
 
     def _run_loop(self):
         asyncio.set_event_loop(self.loop)
@@ -70,7 +70,7 @@ class ThreadSafeMCPClient:
         
         output_stripped = output_text.strip()
         if len(output_stripped) > 4000:
-            print(f"⚠️  [MCP] Truncando respuesta de {name} ({len(output_stripped)} caracteres -> 4000)")
+            print(f"⚠️  [MCP] Truncating response from {name} ({len(output_stripped)} characters -> 4000)")
             output_stripped = output_stripped[:4000] + "\n\n... [TRUNCATED - Output too long for LLM context window] ..."
         return output_stripped
 
@@ -167,5 +167,5 @@ def get_mcp_tools(mcp_config: dict, transport: str = "stdio") -> List[Structured
             return []
         return tools
     except Exception as e:
-        print(f"⚠️ [MCP] Falló la conexión con el servidor MCP {mcp_config.get('command')}: {e}")
+        print(f"⚠️ [MCP] Connection with MCP server {mcp_config.get('command')} failed: {e}")
         return []

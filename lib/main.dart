@@ -1,52 +1,51 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import 'providers/auth_provider.dart';
-import 'providers/expense_provider.dart';
-import 'views/login_view.dart';
-import 'views/dashboard_view.dart';
+import 'presentation/screens/home_screen.dart';
+import 'presentation/screens/vessel_form_screen.dart';
+import 'presentation/screens/checklist_screen.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-  ]);
-  runApp(const MyApp());
+void main() {
+  runApp(const MarineCheckProApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MarineCheckProApp extends StatelessWidget {
+  const MarineCheckProApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => ExpenseProvider()),
-      ],
-      child: MaterialApp(
-        title: 'Gestión de Gastos',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
+    return MaterialApp(
+      title: 'MarineCheck Pro',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        colorScheme: ColorScheme.fromSwatch(
           primarySwatch: Colors.blue,
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+          accentColor: Colors.orange,
+        ).copyWith(
+          secondary: Colors.orange,
         ),
-        home: const SplashScreen(),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.blue,
+          foregroundColor: Colors.white,
+          elevation: 4,
+        ),
+        cardTheme: CardTheme(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
       ),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const HomeScreen(),
+        '/vessel': (context) => const VesselFormScreen(),
+        '/checklist': (context) => const ChecklistScreen(),
+      },
     );
-  }
-}
-
-class SplashScreen extends StatelessWidget {
-  const SplashScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final authProvider = context.watch<AuthProvider>();
-    if (authProvider.isAuthenticated) {
-      return const DashboardView();
-    }
-    return const LoginView();
   }
 }

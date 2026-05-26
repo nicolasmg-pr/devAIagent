@@ -47,7 +47,7 @@ async def delete_github_resources(project_name: str, github_pr_url: Optional[str
         pr_match = re.search(r'pull/(\d+)', github_pr_url)
         if pr_match and "update_pull_request" in tool_map:
             pr_number = int(pr_match.group(1))
-            print(f"   🐙 [GitHub MCP] Cerrando Pull Request #{pr_number}...")
+            print(f"   🐙 [GitHub MCP] Closing Pull Request #{pr_number}...")
             try:
                 tool_map["update_pull_request"].invoke({
                     "owner": owner,
@@ -57,8 +57,8 @@ async def delete_github_resources(project_name: str, github_pr_url: Optional[str
                 })
                 res["pr_closed"] = True
             except Exception as e:
-                print(f"   ⚠️  [GitHub] No se pudo cerrar la PR: {e}")
-                
+                print(f"   ⚠️  [GitHub] Could not close PR: {e}")
+                 
         # 2. Delete branch
         # We try both "feature/ai-generated-{project_name}" and branches matching "review-refinements-*"
         branch_candidates = [f"feature/ai-generated-{project_name}"]
@@ -68,7 +68,7 @@ async def delete_github_resources(project_name: str, github_pr_url: Optional[str
             # First try feature branch
             for branch in branch_candidates:
                 try:
-                    print(f"   🐙 [GitHub MCP] Eliminando rama 'heads/{branch}'...")
+                    print(f"   🐙 [GitHub MCP] Deleting branch 'heads/{branch}'...")
                     tool_map["delete_git_ref"].invoke({
                         "owner": owner,
                         "repo": repo,
@@ -77,14 +77,14 @@ async def delete_github_resources(project_name: str, github_pr_url: Optional[str
                     res["branch_deleted"] = True
                 except Exception:
                     pass
-                    
+                     
         # 3. Check if repo empty and ask to delete
         # For simplicity and robust prompt-driven behavior:
         # If the repo delete tool is present and we want to allow it:
         if "delete_repository" in tool_map:
-            confirm = input(f"¿Borrar también el repositorio '{owner}/{repo}' en GitHub? [s/N]: ").strip().lower()
-            if confirm == "s":
-                print(f"   🐙 [GitHub MCP] Eliminando repositorio '{owner}/{repo}'...")
+            confirm = input(f"Delete also the repository '{owner}/{repo}' on GitHub? [y/N]: ").strip().lower()
+            if confirm in ["y", "yes", "s", "si"]:
+                print(f"   🐙 [GitHub MCP] Deleting repository '{owner}/{repo}'...")
                 try:
                     tool_map["delete_repository"].invoke({
                         "owner": owner,
@@ -92,12 +92,12 @@ async def delete_github_resources(project_name: str, github_pr_url: Optional[str
                     })
                     res["repo_deleted"] = True
                 except Exception as e:
-                    print(f"   ⚠️  [GitHub] No se pudo borrar el repositorio: {e}")
+                    print(f"   ⚠️  [GitHub] Could not delete repository: {e}")
                     res["error"] = str(e)
-                    
+                     
     except Exception as e:
         res["error"] = str(e)
-        
+         
     return res
 
 def run_rm_command(project_name: str, delete_all: bool = False):
@@ -106,53 +106,53 @@ def run_rm_command(project_name: str, delete_all: bool = False):
     output_path = f"./output/{project_name}"
     
     if not meta and not os.path.exists(output_path):
-        print(f"\n❌ Error: El proyecto '{project_name}' no existe localmente ni en el registro.")
+        print(f"\n❌ Error: The project '{project_name}' does not exist locally or in the registry.")
         projects = load_registry()
         if projects:
-            print("Proyectos registrados:")
+            print("Registered projects:")
             for p in projects:
                 print(f"  - {p.project_name}")
         else:
-            print("No hay proyectos generados actualmente.")
+            print("No generated projects currently found.")
         return
 
     size_mb = get_output_size_mb(project_name)
     
-    # ── MODO SOFT ────────────────────────────────────────────────────────────
+    # ── SOFT MODE ────────────────────────────────────────────────────────────
     if not delete_all:
-        github_pr_str = meta.github_pr_url if (meta and meta.github_pr_url) else "(no hay PR)"
-        deploy_str = meta.deploy_url if (meta and meta.deploy_url) else "no desplegado"
+        github_pr_str = meta.github_pr_url if (meta and meta.github_pr_url) else "(no PR created)"
+        deploy_str = meta.deploy_url if (meta and meta.deploy_url) else "not deployed"
         
         print(f"""
-⚠️  Vas a borrar el código local de '{project_name}'
-   📂 Se eliminará: ./output/{project_name}/ ({size_mb:.1f} MB)
-   🐙 Se mantiene: código en GitHub {github_pr_str}
-   🚀 Se mantiene: deploy en {deploy_str}
+⚠️  You are about to delete local code of '{project_name}'
+   📂 To delete: ./output/{project_name}/ ({size_mb:.1f} MB)
+   🐙 To keep: code on GitHub {github_pr_str}
+   🚀 To keep: deployment at {deploy_str}
 
-¿Confirmar? [s/N]: """, end="")
+Confirm? [y/N]: """, end="")
         
         try:
             confirm = input().strip().lower()
         except (KeyboardInterrupt, EOFError):
-            print("\n❌ Operación cancelada.")
+            print("\n❌ Operation cancelled.")
             return
             
-        if confirm != "s":
-            print("❌ Operación cancelada.")
+        if confirm not in ["y", "yes", "s", "si"]:
+            print("❌ Operation cancelled.")
             return
             
         # Stop Docker compose if active
         docker_compose_path = os.path.join(output_path, "docker-compose.yml")
         if os.path.exists(docker_compose_path):
-            print("   🐳 Deteniendo servicios Docker...")
+            print("   🐳 Stopping Docker services...")
             subprocess.run(["docker", "compose", "-f", docker_compose_path, "down"], capture_output=True)
             
         # Delete local files
         try:
             shutil.rmtree(output_path, ignore_errors=True)
-            print(f"   ✅ Código local eliminado ({size_mb:.1f} MB liberados)")
+            print(f"   ✅ Local code deleted ({size_mb:.1f} MB freed)")
         except Exception as e:
-            print(f"   ⚠️  Error eliminando carpeta local: {e}")
+            print(f"   ⚠️  Error deleting local folder: {e}")
             
         # Update registry entry
         if meta:
@@ -160,71 +160,71 @@ def run_rm_command(project_name: str, delete_all: bool = False):
             save_project(meta)
             
         print(f"""
-✅ '{project_name}' eliminado localmente.
-   {"🐙 El código sigue disponible en: " + meta.github_pr_url if meta and meta.github_pr_url else ""}
-   {"🚀 El deploy sigue activo en: " + meta.deploy_url if meta and meta.deploy_url else ""}
-   Para regenerarlo: devAIteam "{meta.requirement[:60] + '...' if meta else 'tu requerimiento'}"
+✅ '{project_name}' deleted locally.
+   {"🐙 Code remains available at: " + meta.github_pr_url if meta and meta.github_pr_url else ""}
+   {"🚀 Deployment remains active at: " + meta.deploy_url if meta and meta.deploy_url else ""}
+   To regenerate: devAIteam "{meta.requirement[:60] + '...' if meta else 'your requirement'}"
 """)
 
-    # ── MODO TOTAL ───────────────────────────────────────────────────────────
+    # ── TOTAL MODE ───────────────────────────────────────────────────────────
     else:
         github_info = ""
         if meta and meta.github_pr_url:
-            github_info = f"\n   🐙 Se cerrará PR y borrará rama en GitHub: {meta.github_pr_url}"
+            github_info = f"\n   🐙 Will close PR and delete branch on GitHub: {meta.github_pr_url}"
             
         deploy_warning = ""
         if meta and meta.deploy_url:
-            deploy_warning = f"\n   ⚠️  ATENCIÓN: El deploy en {meta.deploy_url} NO se borrará automáticamente.\n      Deberás eliminarlo manualmente desde {meta.deploy_platform}."
+            deploy_warning = f"\n   ⚠️  ATTENTION: The deployment at {meta.deploy_url} will NOT be deleted automatically.\n      You will need to delete it manually from {meta.deploy_platform}."
             
         print(f"""
-🚨 BORRADO TOTAL de '{project_name}'
-   📂 Se eliminará: ./output/{project_name}/ ({size_mb:.1f} MB){github_info}{deploy_warning}
+🚨 TOTAL DELETION of '{project_name}'
+   📂 To delete: ./output/{project_name}/ ({size_mb:.1f} MB){github_info}{deploy_warning}
 
-Esta acción NO se puede deshacer. ¿Confirmar? [s/N]: """, end="")
+This action CANNOT be undone. Confirm? [y/N]: """, end="")
         
         try:
             confirm = input().strip().lower()
         except (KeyboardInterrupt, EOFError):
-            print("\n❌ Operación cancelada.")
+            print("\n❌ Operation cancelled.")
             return
             
-        if confirm != "s":
-            print("❌ Operación cancelada.")
+        if confirm not in ["y", "yes", "s", "si"]:
+            print("❌ Operation cancelled.")
             return
             
         # 1. Stop Docker compose with volumes
         docker_compose_path = os.path.join(output_path, "docker-compose.yml")
         if os.path.exists(docker_compose_path):
-            print("   🐳 Deteniendo servicios Docker (con volúmenes)...")
+            print("   🐳 Stopping Docker services (with volumes)...")
             subprocess.run(["docker", "compose", "-f", docker_compose_path, "down", "-v"], capture_output=True)
             
         # 2. Delete local files
         try:
             shutil.rmtree(output_path, ignore_errors=True)
-            print(f"   ✅ Código local eliminado ({size_mb:.1f} MB liberados)")
+            print(f"   ✅ Local code deleted ({size_mb:.1f} MB freed)")
         except Exception as e:
-            print(f"   ⚠️  Error eliminando carpeta local: {e}")
+            print(f"   ⚠️  Error deleting local folder: {e}")
             
         # 3. Delete GitHub resources if present
         if meta and meta.github_pr_url:
-            print("   🐙 Eliminando recursos de GitHub...")
+            print("   🐙 Deleting GitHub resources...")
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             try:
                 github_result = loop.run_until_complete(delete_github_resources(project_name, meta.github_pr_url))
                 if github_result.get("pr_closed"):
-                    print("   ✅ PR cerrada en GitHub")
+                    print("   ✅ PR closed on GitHub")
                 if github_result.get("branch_deleted"):
-                    print("   ✅ Rama eliminada en GitHub")
+                    print("   ✅ Branch deleted on GitHub")
                 if github_result.get("repo_deleted"):
-                    print("   ✅ Repositorio eliminado en GitHub")
+                    print("   ✅ Repository deleted on GitHub")
                 if github_result.get("error"):
                     print(f"   ⚠️  GitHub: {github_result['error']}")
             except Exception as e:
-                print(f"   ⚠️  Error al invocar GitHub MCP: {e}")
+                print(f"   ⚠️  Error invoking GitHub MCP: {e}")
             finally:
                 loop.close()
-                
+                 
         # 4. Remove from registry
         try:
             registry = load_registry()
@@ -232,15 +232,15 @@ Esta acción NO se puede deshacer. ¿Confirmar? [s/N]: """, end="")
             with open("./output/.registry.json", "w", encoding="utf-8") as f:
                 import json
                 json.dump([p.model_dump() for p in registry], f, indent=2, ensure_ascii=False)
-            print("   ✅ Registro de proyecto eliminado de .registry.json")
+            print("   ✅ Project registry entry deleted from .registry.json")
         except Exception as e:
-            print(f"   ⚠️  Error actualizando registro central: {e}")
+            print(f"   ⚠️  Error updating central registry: {e}")
             
         if meta and meta.deploy_url:
             print(f"""
-✅ '{project_name}' eliminado completamente.
-   ⚠️  Recuerda eliminar el deploy manualmente en {meta.deploy_platform}:
+✅ '{project_name}' completely deleted.
+   ⚠️  Remember to manually delete the deployment at {meta.deploy_platform}:
        {meta.deploy_url}
 """)
         else:
-            print(f"\n✅ '{project_name}' eliminado completamente.\n")
+            print(f"\n✅ '{project_name}' completely deleted.\n")

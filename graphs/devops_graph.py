@@ -25,7 +25,7 @@ def preview_node(state: DevOpsState) -> dict:
 def format_node(state: DevOpsState) -> dict:
     """Format and print local preview status."""
     if state.error:
-        print(f"\n❌ Error en DevOps Agent:\n{state.error}")
+        print(f"\n❌ Error in DevOps Agent:\n{state.error}")
         return {}
 
     o = state.local_preview_output
@@ -43,29 +43,29 @@ def format_node(state: DevOpsState) -> dict:
         if s.error:
             print(f"   ⚠️  {s.error}")
         if s.logs_tail:
-            print("   Logs (últimas 3 líneas):")
+            print("   Logs (last 3 lines):")
             for line in s.logs_tail[-3:]:
                 print(f"     | {line}")
 
     print()
     if o.preview_ready:
-        print(f"🌐 App disponible en: {o.frontend_url}")
-        print(f"🔌 API disponible en: {o.backend_url}")
-        print(f"📂 Código en: ./output/{state.project_name}/")
+        print(f"🌐 App available at: {o.frontend_url}")
+        print(f"🔌 API available at: {o.backend_url}")
+        print(f"📂 Code in: ./output/{state.project_name}/")
         if o.docker_compose_generated:
             print(f"🐳 Docker Compose: ./output/{state.project_name}/docker-compose.yml")
         print()
         print("┌─────────────────────────────────────────┐")
-        print("│  La app está corriendo localmente.      │")
-        print("│  Pruébala en tu navegador.              │")
-        print("│  Cuando estés listo para desplegar:     │")
+        print("│  The app is running locally.            │")
+        print("│  Test it in your browser.               │")
+        print("│  When you are ready to deploy:          │")
         print("│                                         │")
         print(f"│  devAIteam deploy {state.project_name}        │")
         print("└─────────────────────────────────────────┘")
     else:
-        print("⚠️  Preview automático no disponible.")
+        print("⚠️  Automatic preview not available.")
         if o.manual_instructions:
-            print("\n📋 INSTRUCCIONES MANUALES DE CONFIGURACIÓN Y EJECUCIÓN:")
+            print("\n📋 MANUAL SETUP AND EXECUTION INSTRUCTIONS:")
             print(o.manual_instructions)
             
     print("━" * 40)
@@ -75,9 +75,9 @@ def human_preview_node(state: DevOpsState) -> dict:
     """Standard Python input() blocking prompt (not a LangGraph interrupt)."""
     # Wait for the user to press ENTER
     try:
-        input("\n⏸  Presiona ENTER cuando hayas probado la app para continuar...")
+        input("\n⏸  Press ENTER when you have tested the app to continue...")
     except (KeyboardInterrupt, EOFError):
-        print("\nContinuando automáticamente...")
+        print("\nContinuing automatically...")
     return {}
 
 def build_devops_graph():

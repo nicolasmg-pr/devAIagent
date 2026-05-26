@@ -48,13 +48,13 @@ def context7_node(state: ArchitectState) -> dict:
     if state.error or state.architect_output is None:
         return {}
 
-    print("🔍 [Context7 Node] Buscando documentación en Context7 y refinando arquitectura...")
+    print("🔍 [Context7 Node] Searching documentation in Context7 and refining architecture...")
     try:
         context7_docs = _run_async_in_thread(enrich_with_context7(state.architect_output.tech_stack))
         refined_output = refine_architecture_with_docs(state.architect_output, context7_docs)
         return {"architect_output": refined_output}
     except Exception as exc:
-        print(f"⚠️ [Context7 Node] Falló el enriquecimiento con Context7: {exc}")
+        print(f"⚠️ [Context7 Node] Enrichment with Context7 failed: {exc}")
         state.architect_output.context7_enriched = False
         return {"architect_output": state.architect_output}
 
@@ -62,20 +62,20 @@ def context7_node(state: ArchitectState) -> dict:
 def format_node(state: ArchitectState) -> dict:
     """Pretty-print the Architect output with emojis and structured formatting."""
     if state.error:
-        print(f"\n❌ Error durante la ejecución del Architect Agent:\n{state.error}")
+        print(f"\n❌ Error during Architect Agent execution:\n{state.error}")
         return {}
 
     output = state.architect_output
     if output is None:
-        print("\n⚠️  No se generó output de arquitectura.")
+        print("\n⚠️  No architecture output generated.")
         return {}
 
     print("\n" + "=" * 60)
-    print(f"🏗️  ARQUITECTURA DEL PROYECTO: {output.project_name}")
+    print(f"🏗️  PROJECT ARCHITECTURE: {output.project_name}")
     print("=" * 60)
 
     # ── Architecture pattern ─────────────────────────────────────────
-    print(f"\n🏛️  Patrón arquitectónico: {output.architecture_pattern}")
+    print(f"\n🏛️  Architectural Pattern: {output.architecture_pattern}")
 
     # ── Tech stack ───────────────────────────────────────────────────
     ts = output.tech_stack
@@ -85,34 +85,34 @@ def format_node(state: ArchitectState) -> dict:
     print(f"   📱 Frontend:       {ts.frontend}")
     print(f"   ⚙️  Backend:        {ts.backend}")
     print(f"   🗄️  Database:       {ts.database}")
-    print(f"   ☁️  Infraestructura: {ts.infrastructure}")
+    print(f"   ☁️  Infrastructure: {ts.infrastructure}")
     if ts.additional_tools:
-        print(f"   🔧 Herramientas:   {', '.join(ts.additional_tools)}")
+        print(f"   🔧 Tools:          {', '.join(ts.additional_tools)}")
 
     # ── API endpoints ────────────────────────────────────────────────
     print("\n" + "-" * 60)
     print(f"🔌 API ENDPOINTS ({len(output.api_endpoints)})")
     print("-" * 60)
-    print(f"   {'Método':<8} {'Path':<30} {'Descripción'}")
+    print(f"   {'Method':<8} {'Path':<30} {'Description'}")
     print(f"   {'─' * 8} {'─' * 30} {'─' * 40}")
     for ep in output.api_endpoints:
         print(f"   {ep.method:<8} {ep.path:<30} {ep.description}")
 
     # ── Database entities ────────────────────────────────────────────
     print("\n" + "-" * 60)
-    print(f"🗄️  ENTIDADES DE BASE DE DATOS ({len(output.database_entities)})")
+    print(f"🗄️  DATABASE ENTITIES ({len(output.database_entities)})")
     print("-" * 60)
     for entity in output.database_entities:
         print(f"\n   📦 {entity.name}")
-        print(f"      Campos: {', '.join(entity.fields[:5])}")
+        print(f"      Fields: {', '.join(entity.fields[:5])}")
         if len(entity.fields) > 5:
-            print(f"             ...y {len(entity.fields) - 5} más")
+            print(f"             ...and {len(entity.fields) - 5} more")
         if entity.relationships:
-            print(f"      Relaciones: {', '.join(entity.relationships)}")
+            print(f"      Relationships: {', '.join(entity.relationships)}")
 
     # ── Mermaid diagram ──────────────────────────────────────────────
     print("\n" + "-" * 60)
-    print("📐 DIAGRAMA DE ARQUITECTURA (Mermaid)")
+    print("📐 ARCHITECTURE DIAGRAM (Mermaid)")
     print("-" * 60)
     print("```mermaid")
     print(output.mermaid_diagram)
@@ -120,13 +120,13 @@ def format_node(state: ArchitectState) -> dict:
 
     # ── Key decisions ────────────────────────────────────────────────
     print("\n" + "-" * 60)
-    print("💡 DECISIONES ARQUITECTÓNICAS CLAVE")
+    print("💡 KEY ARCHITECTURAL DECISIONS")
     print("-" * 60)
     for i, decision in enumerate(output.key_decisions, 1):
         print(f"   {i}. {decision}")
 
     print("-" * 60)
-    enriched_status = "✅ docs enriquecidos" if output.context7_enriched else "⚠️ no disponible"
+    enriched_status = "✅ docs enriched" if output.context7_enriched else "⚠️ not available"
     print(f"🔍 Context7: {enriched_status}")
 
     print("\n" + "=" * 60 + "\n")

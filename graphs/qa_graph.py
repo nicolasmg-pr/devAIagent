@@ -54,7 +54,7 @@ class QAState(BaseModel):
 def test_generator_node(state: QAState) -> dict:
     """Execute the Test Generator sub-agent."""
     try:
-        print("   🧪 Test Generator generando casos y código de tests...")
+        print("   🧪 Test Generator generating test cases and code...")
         result = run_test_generator(state.pm_output, state.developer_output)
         return {"test_output": result}
     except Exception as exc:
@@ -65,7 +65,7 @@ def test_generator_node(state: QAState) -> dict:
 def code_reviewer_node(state: QAState) -> dict:
     """Execute the Code Reviewer sub-agent."""
     try:
-        print("   🔍 Code Reviewer analizando calidad del código...")
+        print("   🔍 Code Reviewer analyzing code quality...")
         result = run_code_reviewer(state.developer_output)
         return {"review_output": result}
     except Exception as exc:
@@ -79,7 +79,7 @@ def merge_node(state: QAState) -> dict:
         return {}
 
     if state.test_output is None or state.review_output is None:
-        return {"error": "Uno o ambos sub-agentes QA no generaron output."}
+        return {"error": "One or both QA sub-agents did not generate output."}
 
     project_name = state.developer_output.project_name
     qa_output = merge_qa_outputs(project_name, state.test_output, state.review_output)
@@ -91,12 +91,12 @@ def e2e_node(state: QAState) -> dict:
     if state.error or state.qa_output is None:
         return {}
         
-    print("🎭 [QA E2E Node] Iniciando pruebas de navegación y verificación...")
+    print("🎭 [QA E2E Node] Starting navigation and verification tests...")
     try:
         e2e_res = _run_async_in_thread(run_e2e_tests(state.developer_output))
         return {"e2e_output": e2e_res}
     except Exception as exc:
-        print(f"⚠️ [QA E2E Node] Error en pruebas E2E: {exc}")
+        print(f"⚠️ [QA E2E Node] Error in E2E tests: {exc}")
         return {"e2e_output": {"error": str(exc)}}
 
 
@@ -105,24 +105,24 @@ def save_tests_node(state: QAState) -> dict:
     if state.error or state.qa_output is None:
         return {}
         
-    print("💾 [QA Save Tests Node] Guardando archivos de tests...")
+    print("💾 [QA Save Tests Node] Saving test files...")
     try:
         _run_async_in_thread(generate_test_files_with_filesystem(state.qa_output.test_files))
         return {"test_saved": True}
     except Exception as exc:
-        print(f"⚠️ [QA Save Tests Node] Error al guardar tests: {exc}")
+        print(f"⚠️ [QA Save Tests Node] Error saving tests: {exc}")
         return {"test_saved": False}
 
 
 def format_node(state: QAState) -> dict:
     """Pretty-print the QA output with structured formatting."""
     if state.error:
-        print(f"\n❌ Error durante la ejecución del QA Agent:\n{state.error}")
+        print(f"\n❌ Error during QA Agent execution:\n{state.error}")
         return {}
 
     output = state.qa_output
     if output is None:
-        print("\n⚠️  No se generó output de QA.")
+        print("\n⚠️  No QA output was generated.")
         return {}
 
     print("\n" + "=" * 60)
@@ -170,14 +170,14 @@ def format_node(state: QAState) -> dict:
 
     # ── Test files ───────────────────────────────────────────────────
     print(f"\n{'─' * 60}")
-    print(f"📁 TEST FILES GENERADOS ({len(output.test_files)} archivos):")
+    print(f"📁 GENERATED TEST FILES ({len(output.test_files)} files):")
     print(f"{'─' * 60}")
     for tf in output.test_files:
         print(f"   📄 {tf.path}/{tf.filename} — {tf.description}")
 
     # ── Code issues ──────────────────────────────────────────────────
     print(f"\n{'─' * 60}")
-    print(f"🐛 CODE ISSUES ({len(output.code_issues)} encontrados):")
+    print(f"🐛 CODE ISSUES ({len(output.code_issues)} found):")
     print(f"{'─' * 60}")
 
     severity_icons = {
@@ -202,18 +202,18 @@ def format_node(state: QAState) -> dict:
     # ── E2E Results ──────────────────────────────────────────────────
     if state.e2e_output:
         print(f"\n{'─' * 60}")
-        print("🎭 RESULTADOS DE PRUEBAS E2E / VERIFICACIÓN:")
+        print("🎭 E2E TESTS / VERIFICATION RESULTS:")
         print(f"{'─' * 60}")
         for url, res in state.e2e_output.items():
             status_icon = "✅" if res.get("status") in ["success", "simulated"] else "❌"
             print(f"   {status_icon} {url} : Status={res.get('status')}")
             if "http_code" in res:
-                print(f"      Código HTTP: {res.get('http_code')}")
+                print(f"      HTTP Code: {res.get('http_code')}")
             if "screenshot_path" in res:
-                print(f"      Captura visual: {res.get('screenshot_path')}")
+                print(f"      Visual Capture: {res.get('screenshot_path')}")
                 
     if state.test_saved:
-        print(f"\n💾 Archivos de prueba guardados en: ./output/tests/")
+        print(f"\n💾 Test files saved to: ./output/tests/")
 
     print("\n" + "=" * 60 + "\n")
 

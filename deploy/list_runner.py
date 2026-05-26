@@ -17,19 +17,19 @@ def run_list_command():
     projects = load_registry()
     
     if not projects:
-        print("\nNo hay proyectos generados todavía.")
-        print("Crea uno con:")
-        print('  devAIteam "describe tu app"\n')
+        print("\nNo projects generated yet.")
+        print("Create one with:")
+        print('  devAIteam "describe your app"\n')
         return
 
     n = len(projects)
     
     # Render table header
     print("\n╔" + "═" * 70 + "╗")
-    title_text = f"  devAIteam — PROYECTOS GENERADOS ({n} total)"
+    title_text = f"  devAIteam — GENERATED PROJECTS ({n} total)"
     print("║" + title_text.ljust(70) + "║")
     print("╠" + "═" * 6 + "╦" + "═" * 23 + "╦" + "═" * 10 + "╦" + "═" * 13 + "╦" + "═" * 14 + "╣")
-    print("║ " + format_col("#", 4) + " ║ " + format_col("Proyecto", 21) + " ║ " + format_col("QA Score", 8) + " ║ " + format_col("Deploy", 11) + " ║ " + format_col("Tamaño", 12) + " ║")
+    print("║ " + format_col("#", 4) + " ║ " + format_col("Project", 21) + " ║ " + format_col("QA Score", 8) + " ║ " + format_col("Deploy", 11) + " ║ " + format_col("Size", 12) + " ║")
     print("╠" + "═" * 6 + "╬" + "═" * 23 + "╬" + "═" * 10 + "╬" + "═" * 13 + "╬" + "═" * 14 + "╣")
     
     # Render table rows
@@ -65,25 +65,25 @@ def run_list_command():
         if len(req_trimmed) > 80:
             req_trimmed = req_trimmed[:77] + "..."
             
-        print(f"   📅 Creado: {created_formatted}")
+        print(f"   📅 Created: {created_formatted}")
         print(f"   📝 \"{req_trimmed}\"")
         print(f"   🛠  Stack: {p.tech_stack}")
-        print(f"   📄 Archivos: {p.files_count} generados · {p.output_size_mb:.1f} MB en ./output/{p.project_name}/")
+        print(f"   📄 Files: {p.files_count} generated · {p.output_size_mb:.1f} MB in ./output/{p.project_name}/")
         
         score_val = f"{p.quality_score}/100" if p.quality_score is not None else "N/A"
         print(f"   🧪 QA Score: {score_val}")
         
-        preview_val = "✅ disponible" if p.local_preview_available else "❌ no disponible"
-        print(f"   🌐 Preview local: {preview_val}")
+        preview_val = "✅ available" if p.local_preview_available else "❌ not available"
+        print(f"   🌐 Local Preview: {preview_val}")
         
-        pr_val = p.github_pr_url if p.github_pr_url else "no hay PR"
+        pr_val = p.github_pr_url if p.github_pr_url else "no PR created"
         print(f"   🐙 GitHub PR: {pr_val}")
         
-        dep_val = f"✅ {p.deploy_url} ({p.deploy_platform})" if p.deploy_status == "deployed" else "❌ no desplegado"
+        dep_val = f"✅ {p.deploy_url} ({p.deploy_platform})" if p.deploy_status == "deployed" else "❌ not deployed"
         print(f"   🚀 Deploy: {dep_val}")
         
-        print("\n   Comandos disponibles:")
-        print(f"     devAIteam deploy {p.project_name}   (redesplegar)")
-        print(f"     devAIteam rm {p.project_name}       (borrar código local)")
-        print(f"     devAIteam rm {p.project_name} --all (borrar local + GitHub)")
+        print("\n   Available Commands:")
+        print(f"     devAIteam deploy {p.project_name}   (redeploy)")
+        print(f"     devAIteam rm {p.project_name}       (delete local code)")
+        print(f"     devAIteam rm {p.project_name} --all (delete local + GitHub)")
         print("-" * 50 + "\n")

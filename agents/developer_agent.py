@@ -58,24 +58,24 @@ class DeveloperOutput(BaseModel):
 # ── System prompts ───────────────────────────────────────────────────────────
 
 BACKEND_SYSTEM_PROMPT = """\
-Eres un Desarrollador Backend Senior con más de 10 años de experiencia, \
-especialista en NestJS, TypeScript y Clean Architecture.
+You are a Senior Backend Developer with over 10 years of experience, \
+specializing in NestJS, TypeScript, and Clean Architecture.
 
-Tu tarea es recibir un documento de arquitectura de software y generar \
-código real, funcional y completo para el backend del proyecto.
+Your task is to receive a software architecture document and generate \
+real, functional, and complete code for the backend of the project.
 
-PRIORIDADES:
-- Estructura de carpetas correcta siguiendo Clean Architecture
-- Entidades TypeORM con decoradores y tipos correctos
-- DTOs de creación con validación usando class-validator
-- Servicios con lógica de negocio CRUD completa
-- Controladores REST con decoradores NestJS correctos
-- Module principal que importa todos los módulos
+PRIORITIES:
+- Correct folder structure following Clean Architecture
+- TypeORM entities with correct decorators and types
+- Creation DTOs with validation using class-validator
+- Services with complete CRUD business logic
+- REST controllers with correct NestJS decorators
+- Main application Module that imports all other modules
 
-REGLAS ESTRICTAS:
-1. Responde ÚNICAMENTE con un JSON válido. NO incluyas texto explicativo, \
-comentarios, ni bloques markdown (```).
-2. El JSON debe seguir EXACTAMENTE este esquema:
+STRICT RULES:
+1. Respond ONLY with a valid JSON. Do NOT include explanatory text, \
+comments, or markdown blocks (```).
+2. The JSON must follow EXACTLY this schema:
 
 {{
   "files": [
@@ -98,32 +98,32 @@ comentarios, ni bloques markdown (```).
   ]
 }}
 
-3. Genera código TypeScript real y funcional, no placeholders.
-4. Incluye al menos: app.module.ts, una entidad por cada entidad de la BD, \
-un DTO de creación por entidad, un servicio con CRUD básico, y un controlador \
-con los endpoints principales.
-5. Escapa correctamente las comillas y saltos de línea dentro del campo "content".
-6. NO uses backticks, NO uses markdown, SOLO JSON puro.
+3. Generate real and functional TypeScript code, not placeholders.
+4. Include at least: app.module.ts, one entity for each DB entity, \
+one creation DTO per entity, a service with basic CRUD, and a controller \
+with the main endpoints.
+5. Correctly escape quotes and line breaks within the "content" field.
+6. Do NOT use backticks, do NOT use markdown, ONLY pure JSON.
 """
 
 FRONTEND_SYSTEM_PROMPT = """\
-Eres un Desarrollador Frontend Senior con más de 10 años de experiencia, \
-especialista en Flutter, Dart y Clean Architecture.
+You are a Senior Frontend Developer with over 10 years of experience, \
+specializing in Flutter, Dart, and Clean Architecture.
 
-Tu tarea es recibir un documento de arquitectura de software y generar \
-código real, funcional y completo para el frontend móvil del proyecto.
+Your task is to receive a software architecture document and generate \
+real, functional, and complete code for the mobile frontend of the project.
 
-PRIORIDADES:
-- Estructura de features siguiendo Clean Architecture
-- Modelos de datos Dart que mapean las entidades del backend
-- Repositorios con llamadas HTTP al backend usando http o dio
-- Páginas principales con widgets Material Design funcionales
-- Navegación entre pantallas
+PRIORITIES:
+- Feature structure following Clean Architecture
+- Dart data models that map backend entities
+- Repositories with HTTP calls to the backend using http or dio
+- Main pages with functional Material Design widgets
+- Navigation between screens
 
-REGLAS ESTRICTAS:
-1. Responde ÚNICAMENTE con un JSON válido. NO incluyas texto explicativo, \
-comentarios, ni bloques markdown (```).
-2. El JSON debe seguir EXACTAMENTE este esquema:
+STRICT RULES:
+1. Respond ONLY with a valid JSON. Do NOT include explanatory text, \
+comments, or markdown blocks (```).
+2. The JSON must follow EXACTLY this schema:
 
 {{
   "files": [
@@ -146,27 +146,26 @@ comentarios, ni bloques markdown (```).
   ]
 }}
 
-3. Genera código Dart real y funcional, no placeholders.
-4. Incluye al menos: main.dart, un modelo por cada entidad principal, \
-un repositorio con llamadas HTTP, y una página por cada historia de usuario \
-de alta prioridad.
-5. Escapa correctamente las comillas y saltos de línea dentro del campo "content".
-6. NO uses backticks, NO uses markdown, SOLO JSON puro.
+3. Generate real and functional Dart code, not placeholders.
+4. Include at least: main.dart, one model per main entity, \
+a repository with HTTP calls, and one page per high-priority user story.
+5. Correctly escape quotes and line breaks within the "content" field.
+6. Do NOT use backticks, do NOT use markdown, ONLY pure JSON.
 """
 
 RETRY_PROMPT = """\
-Tu respuesta anterior NO fue un JSON válido. El error fue:
+Your previous response was NOT valid JSON. The error was:
 {error}
 
-DEBES responder con JSON puro y válido. Sin texto extra, sin backticks, \
-sin explicaciones. Solo el objeto JSON que cumpla el esquema indicado.
-Asegúrate de:
-- Escapar comillas internas con \\\"
-- Usar \\n para saltos de línea dentro de strings
-- No dejar comas al final de arrays u objetos
-- Cerrar todas las llaves y corchetes correctamente
+You MUST respond with pure and valid JSON. No extra text, no backticks, \
+no explanations. Only the JSON object that complies with the indicated schema.
+Make sure to:
+- Escape internal quotes with \\\"
+- Use \\n for line breaks inside strings
+- Do not leave trailing commas in arrays or objects
+- Close all braces and brackets correctly
 
-Vuelve a generar la respuesta completa:
+Regenerate the complete response:
 """
 
 
@@ -208,9 +207,9 @@ def _invoke_with_retry(llm: Any, messages: list, model_class: type, max_retries:
             return model_class.model_validate(data)
         except Exception as exc:
             last_error = exc
-            print(f"   ⚠️  Intento {attempt + 1} falló: {exc}")
+            print(f"   ⚠️  Attempt {attempt + 1} failed: {exc}")
             if attempt < max_retries:
-                print(f"   🔄 Reintentando con prompt más estricto...")
+                print(f"   🔄 Retrying with stricter prompt...")
                 messages = messages + [
                     HumanMessage(content=RETRY_PROMPT.format(error=str(exc)))
                 ]
@@ -237,7 +236,7 @@ def _write_generated_files(files: list[CodeFile]):
         target_dir = os.path.join(base_dir, f.path)
         os.makedirs(target_dir, exist_ok=True)
         file_path = os.path.join(target_dir, f.filename)
-        print(f"💾 Guardando archivo: {file_path}")
+        print(f"💾 Saving file: {file_path}")
         with open(file_path, "w", encoding="utf-8") as out:
             out.write(f.content)
 
@@ -270,15 +269,15 @@ async def save_files_to_filesystem(developer_output: DeveloperOutput):
                 parent_dir = os.path.dirname(full_path)
                 os.makedirs(parent_dir, exist_ok=True)
                 
-                print(f"🚀 [Filesystem MCP] Guardando archivo: {rel_path}...")
+                print(f"🚀 [Filesystem MCP] Saving file: {rel_path}...")
                 tool_map["write_file"].invoke({
                     "path": full_path,
                     "content": f.content
                 })
-                print(f"📄 Guardado: {f.path}/{f.filename}")
+                print(f"📄 Saved: {f.path}/{f.filename}")
                 continue
             except Exception as e:
-                print(f"⚠️ [Filesystem MCP] Error escribiendo {rel_path} vía MCP: {e}. Usando fallback local...")
+                print(f"⚠️ [Filesystem MCP] Error writing {rel_path} via MCP: {e}. Using local fallback...")
         
         # Fallback to python
         try:
@@ -287,9 +286,9 @@ async def save_files_to_filesystem(developer_output: DeveloperOutput):
             os.makedirs(parent_dir, exist_ok=True)
             with open(fallback_full_path, "w", encoding="utf-8") as out_f:
                 out_f.write(f.content)
-            print(f"📄 Guardado (Local Fallback): {f.path}/{f.filename}")
+            print(f"📄 Saved (Local Fallback): {f.path}/{f.filename}")
         except Exception as e:
-            print(f"❌ Error escribiendo archivo local de fallback: {e}")
+            print(f"❌ Error writing local fallback file: {e}")
 
 
 def run_backend_agent(architect_output: ArchitectOutput, designer_output: Optional[UIDesignerOutput] = None) -> BackendOutput:
@@ -308,16 +307,16 @@ def run_backend_agent(architect_output: ArchitectOutput, designer_output: Option
     
     prompt = (
         f"{BACKEND_SYSTEM_PROMPT}\n\n"
-        "Genera el código backend completo basado en esta arquitectura. "
-        "Si necesitas consultar documentación sobre NestJS, TypeORM, Postgres, etc., usa Context7. "
-        "Adicionalmente, puedes usar las herramientas de Filesystem para verificar archivos si lo necesitas. "
-        "IMPORTANTE: NO busques, listes ni leas archivos en directorios ajenos al backend de este proyecto actual, "
-        "especialmente NUNCA entres en carpetas como 'gestor_gastos' o 'fintrack_app'. "
-        "Solo opera dentro del contexto de desarrollo de este proyecto actual.\n\n"
+        "Generate the complete backend code based on this architecture. "
+        "If you need to consult documentation about NestJS, TypeORM, Postgres, etc., use Context7. "
+        "Additionally, you can use Filesystem tools to verify files if needed. "
+        "IMPORTANT: DO NOT search, list, or read files in directories outside the current project's backend, "
+        "especially NEVER enter folders like 'gestor_gastos' or 'fintrack_app'. "
+        "Only operate within the development context of this current project.\n\n"
         f"{arch_json}"
     )
 
-    print("☕  Backend Developer Agent consultando herramientas y escribiendo backend...")
+    print("☕  Backend Developer Agent consulting tools and writing backend...")
     response = agent.invoke({"messages": [HumanMessage(content=prompt)]}, config={"recursion_limit": 10})
     
     final_message = response["messages"][-1].content
@@ -328,7 +327,7 @@ def run_backend_agent(architect_output: ArchitectOutput, designer_output: Option
         data = json_repair.loads(cleaned)
         return BackendOutput.model_validate(data)
     except Exception as exc:
-        print(f"   ⚠️ Falló parseo de backend: {exc}. Reintentando con prompt directo...")
+        print(f"   ⚠️ Backend parsing failed: {exc}. Retrying with direct prompt...")
         messages = [
             SystemMessage(content=BACKEND_SYSTEM_PROMPT),
             HumanMessage(content=prompt),
@@ -360,7 +359,7 @@ def run_frontend_agent(architect_output: ArchitectOutput, designer_output: Optio
     ui_context = ""
     system_prompt = FRONTEND_SYSTEM_PROMPT
     if designer_output:
-        system_prompt += "\nImplementa las pantallas siguiendo fielmente el sistema de diseño del DESIGN.md adjunto. Los colores, tipografía y espaciados deben coincidir exactamente con los tokens definidos."
+        system_prompt += "\nImplement the screens faithfully following the design system from the attached DESIGN.md. Colors, typography, and spacing must match the defined tokens exactly."
         ui_context += "# DESIGN.md\n"
         ui_context += f"{designer_output.design_system_notes}\n\n"
         ui_context += "## SCREENS AND VIEWS REFERENCE:\n"
@@ -376,20 +375,20 @@ def run_frontend_agent(architect_output: ArchitectOutput, designer_output: Optio
                 ui_context += f"HTML Reference (Truncated):\n```html\n{html_snippet}\n```\n"
             ui_context += "\n"
     else:
-        ui_context = "No hay diseño UI provisto."
+        ui_context = "No UI design provided."
         
     prompt = (
-        f"Genera el código frontend Flutter completo basado en esta arquitectura y en el diseño de pantallas (Google Stitch) provisto. "
-        "Si necesitas consultar documentación sobre Flutter, Widgets, http, etc., usa Context7. "
-        "Adicionalmente, puedes usar las herramientas de Filesystem para verificar archivos si lo necesitas. "
-        "IMPORTANTE: NO busques, listes ni leas archivos en directorios ajenos al frontend de este proyecto actual, "
-        "especialmente NUNCA entres en carpetas como 'gestor_gastos' o 'fintrack_app'. "
-        "Solo opera dentro del contexto de desarrollo de este proyecto actual.\n\n"
-        f"ARQUITECTURA:\n{arch_json}\n\n"
-        f"DISEÑO Y PANTALLAS DE INTERFAZ:\n{ui_context}"
+        f"Generate the complete Flutter frontend code based on this architecture and the provided screen design (Google Stitch). "
+        "If you need to consult documentation about Flutter, Widgets, http, etc., use Context7. "
+        "Additionally, you can use Filesystem tools to verify files if needed. "
+        "IMPORTANT: DO NOT search, list, or read files in directories outside the current project's frontend, "
+        "especially NEVER enter folders like 'gestor_gastos' or 'fintrack_app'. "
+        "Only operate within the development context of this current project.\n\n"
+        f"ARCHITECTURE:\n{arch_json}\n\n"
+        f"INTERFACE DESIGN AND SCREENS:\n{ui_context}"
     )
 
-    print("📱  Frontend Developer Agent consultando herramientas y escribiendo frontend...")
+    print("📱  Frontend Developer Agent consulting tools and writing frontend...")
     response = agent.invoke({"messages": [HumanMessage(content=prompt)]}, config={"recursion_limit": 10})
     
     final_message = response["messages"][-1].content
@@ -400,7 +399,7 @@ def run_frontend_agent(architect_output: ArchitectOutput, designer_output: Optio
         data = json_repair.loads(cleaned)
         return FrontendOutput.model_validate(data)
     except Exception as exc:
-        print(f"   ⚠️ Falló parseo de frontend: {exc}. Reintentando con prompt directo...")
+        print(f"   ⚠️ Frontend parsing failed: {exc}. Retrying with direct prompt...")
         messages = [
             SystemMessage(content=system_prompt),
             HumanMessage(content=prompt),

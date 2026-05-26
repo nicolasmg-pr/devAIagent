@@ -48,9 +48,9 @@ def check_deploy_tools() -> dict:
 
 def generate_fly_config(project_name: str, docker_compose_path: str) -> str:
     """Generate fly.toml and save it under ./output/{project_name}/fly.toml"""
-    print(f"   ⚙️  [Deploy] Generando fly.toml para Fly.io...")
-    system_prompt = "Eres un Cloud DevOps Engineer de élite. Genera un archivo fly.toml profesional y funcional para desplegar un backend de NestJS o un frontend de Flutter Web.\nResponde ÚNICAMENTE con el contenido del archivo fly.toml puro, sin markdown, sin backticks, sin explicaciones."
-    human_prompt = f"Proyecto: {project_name}\nGenera fly.toml:"
+    print(f"   ⚙️  [Deploy] Generating fly.toml for Fly.io...")
+    system_prompt = "You are an elite Cloud DevOps Engineer. Generate a professional and functional fly.toml file to deploy a NestJS backend or a Flutter Web frontend.\nRespond ONLY with the pure content of the fly.toml file, without markdown, without backticks, without explanations."
+    human_prompt = f"Project: {project_name}\nGenerate fly.toml:"
     
     messages = [SystemMessage(content=system_prompt), HumanMessage(content=human_prompt)]
     response = llm_developer.invoke(messages)
@@ -62,16 +62,16 @@ def generate_fly_config(project_name: str, docker_compose_path: str) -> str:
     try:
         with open(fly_path, "w", encoding="utf-8") as f:
             f.write(content)
-        print(f"   ✅ [Deploy] fly.toml guardado en {fly_path}")
+        print(f"   ✅ [Deploy] fly.toml saved in {fly_path}")
     except Exception as e:
-        print(f"   ⚠️  [Deploy] Error al guardar fly.toml: {e}")
+        print(f"   ⚠️  [Deploy] Error saving fly.toml: {e}")
     return content
 
 def generate_railway_config(project_name: str) -> str:
     """Generate railway.json and save it under ./output/{project_name}/railway.json"""
-    print(f"   ⚙️  [Deploy] Generando railway.json para Railway...")
-    system_prompt = "Eres un Cloud DevOps Engineer de élite. Genera un archivo railway.json profesional y funcional para desplegar una aplicación web modular.\nResponde ÚNICAMENTE con el contenido del JSON puro, sin markdown, sin backticks, sin explicaciones."
-    human_prompt = f"Proyecto: {project_name}\nGenera railway.json:"
+    print(f"   ⚙️  [Deploy] Generating railway.json for Railway...")
+    system_prompt = "You are an elite Cloud DevOps Engineer. Generate a professional and functional railway.json file to deploy a modular web application.\nRespond ONLY with the pure JSON content, without markdown, without backticks, without explanations."
+    human_prompt = f"Project: {project_name}\nGenerate railway.json:"
     
     messages = [SystemMessage(content=system_prompt), HumanMessage(content=human_prompt)]
     response = llm_developer.invoke(messages)
@@ -83,9 +83,9 @@ def generate_railway_config(project_name: str) -> str:
     try:
         with open(railway_path, "w", encoding="utf-8") as f:
             f.write(content)
-        print(f"   ✅ [Deploy] railway.json guardado en {railway_path}")
+        print(f"   ✅ [Deploy] railway.json saved in {railway_path}")
     except Exception as e:
-        print(f"   ⚠️  [Deploy] Error al guardar railway.json: {e}")
+        print(f"   ⚠️  [Deploy] Error saving railway.json: {e}")
     return content
 
 async def run_deploy(project_name: str, platform="auto") -> DeployOutput:
@@ -112,13 +112,13 @@ async def run_deploy(project_name: str, platform="auto") -> DeployOutput:
     else:
         selected_platform = platform.lower()
         
-    print(f"   🚀 Iniciando deploy de '{project_name}' (Plataforma seleccionada: {selected_platform or 'manual'})...")
+    print(f"   🚀 Starting deployment of '{project_name}' (Selected platform: {selected_platform or 'manual'})...")
     
     # ── FLY.IO DEPLOYMENT ────────────────────────────────────────────────────
     if selected_platform == "fly" and tools["fly"]:
-        print("   📦 Construyendo imagen Docker...")
+        print("   📦 Building Docker image...")
         await asyncio.sleep(2)
-        print("   🚀 Desplegando en Fly.io...")
+        print("   🚀 Deploying on Fly.io...")
         
         try:
             # Generate config first
@@ -128,9 +128,9 @@ async def run_deploy(project_name: str, platform="auto") -> DeployOutput:
             # 1. flyctl auth whoami
             res_whoami = subprocess.run(["fly", "auth", "whoami"], capture_output=True, text=True)
             if res_whoami.returncode != 0:
-                raise Exception("Fly.io CLI no autenticado. Ejecuta 'fly auth login' primero.")
+                raise Exception("Fly.io CLI not authenticated. Run 'fly auth login' first.")
                 
-            print("   🌐 Configurando dominio...")
+            print("   🌐 Configuring domain...")
             # 2. flyctl launch --no-deploy
             subprocess.run(["fly", "launch", "--no-deploy", "--name", project_name, "--region", "mad"], cwd=out_dir, capture_output=True)
             # 3. flyctl deploy --local-only
@@ -140,7 +140,7 @@ async def run_deploy(project_name: str, platform="auto") -> DeployOutput:
             status_res = subprocess.run(["fly", "status"], cwd=out_dir, capture_output=True, text=True)
             primary_url = f"https://{project_name}.fly.dev"
             
-            print(f"   ✅ Deploy completado: {primary_url}")
+            print(f"   ✅ Deployment completed: {primary_url}")
             targets.append(DeployTarget(platform="fly", app_url=primary_url, deploy_status="success", logs=[status_res.stdout]))
             
         except Exception as e:
@@ -150,25 +150,25 @@ async def run_deploy(project_name: str, platform="auto") -> DeployOutput:
             
     # ── RAILWAY DEPLOYMENT ───────────────────────────────────────────────────
     elif selected_platform == "railway" and tools["railway"]:
-        print("   📦 Construyendo imagen Docker...")
+        print("   📦 Building Docker image...")
         await asyncio.sleep(2)
-        print("   🚀 Desplegando en Railway...")
+        print("   🚀 Deploying on Railway...")
         
         try:
             generate_railway_config(project_name)
             # Check login
             res_login = subprocess.run(["railway", "whoami"], capture_output=True, text=True)
             if res_login.returncode != 0:
-                raise Exception("Railway CLI no autenticado. Ejecuta 'railway login' primero.")
+                raise Exception("Railway CLI not authenticated. Run 'railway login' first.")
                 
-            print("   🌐 Configurando dominio...")
+            print("   🌐 Configuring domain...")
             subprocess.run(["railway", "init", "--name", project_name], cwd=out_dir, capture_output=True)
             subprocess.run(["railway", "up"], cwd=out_dir, capture_output=True)
             
             domain_res = subprocess.run(["railway", "domain"], cwd=out_dir, capture_output=True, text=True)
             primary_url = domain_res.stdout.strip() if domain_res.stdout else f"https://{project_name}.up.railway.app"
             
-            print(f"   ✅ Deploy completado: {primary_url}")
+            print(f"   ✅ Deployment completed: {primary_url}")
             targets.append(DeployTarget(platform="railway", app_url=primary_url, deploy_status="success", logs=[domain_res.stdout]))
             
         except Exception as e:
@@ -178,16 +178,16 @@ async def run_deploy(project_name: str, platform="auto") -> DeployOutput:
             
     # ── RENDER DEPLOYMENT ────────────────────────────────────────────────────
     elif selected_platform == "render" and tools["render"]:
-        print("   📦 Construyendo imagen Docker...")
+        print("   📦 Building Docker image...")
         await asyncio.sleep(2)
-        print("   🚀 Desplegando en Render...")
+        print("   🚀 Deploying on Render...")
         
         try:
-            print("   🌐 Configurando dominio...")
+            print("   🌐 Configuring domain...")
             # Render API call using RENDER_API_KEY
             # For robust simulation and fallback:
             primary_url = f"https://{project_name}.onrender.com"
-            print(f"   ✅ Deploy completado: {primary_url}")
+            print(f"   ✅ Deployment completed: {primary_url}")
             targets.append(DeployTarget(platform="render", app_url=primary_url, deploy_status="success", logs=["Render deploy initiated via REST API"]))
             
         except Exception as e:
@@ -197,40 +197,40 @@ async def run_deploy(project_name: str, platform="auto") -> DeployOutput:
             
     # ── FALLBACK TO MANUAL INSTRUCTIONS ──────────────────────────────────────
     if not primary_url or selected_platform is None:
-        print("   ⚠️  Despliegue automatizado no disponible debido a falta de herramientas o credenciales.")
-        print("   🧠 Generando instrucciones detalladas de despliegue para Fly.io, Railway y Render...")
+        print("   ⚠️  Automated deployment not available due to missing tools or credentials.")
+        print("   🧠 Generating detailed deployment instructions for Fly.io, Railway, and Render...")
         
         system_prompt = """\
-Eres un DevOps Architect Senior experto en Cloud (Fly.io, Railway, Render).
-Tu tarea es generar un documento técnico con las instrucciones manuales precisas y comandos de consola exactos \
-para desplegar este proyecto de NestJS + Flutter + PostgreSQL en las tres plataformas indicadas.
-Interpola el nombre del proyecto de forma personalizada.
+You are an expert Senior Cloud DevOps Architect (Fly.io, Railway, Render).
+Your task is to generate a technical document with the precise manual instructions and exact console commands \
+to deploy this NestJS + Flutter + PostgreSQL project on the three specified platforms.
+Interpolate the project name in a personalized way.
 """
         human_prompt = f"""
-Nombre del Proyecto: {project_name}
-Genera la guía paso a paso con los comandos de consola completos y explicaciones breves.
+Project Name: {project_name}
+Generate the step-by-step guide with complete console commands and brief explanations.
 """
         messages = [SystemMessage(content=system_prompt), HumanMessage(content=human_prompt)]
         try:
             response = llm_developer.invoke(messages)
             instructions = clean_txt_response(response.content)
         except Exception as e:
-            instructions = f"Guía básica de despliegue para {project_name}:\n- Fly.io: fly launch && fly deploy\n- Railway: railway init && railway up\n- Render: conecta tu repositorio en dashboard.render.com"
+            instructions = f"Basic deployment guide for {project_name}:\n- Fly.io: fly launch && fly deploy\n- Railway: railway init && railway up\n- Render: connect your repository on dashboard.render.com"
 
         primary_url = "not_deployed"
         
     # Generate share message via LLM if we deployed successfully
     if primary_url != "not_deployed":
-        system_prompt = "Genera un mensaje corto y entusiasta listo para compartir en redes sociales sobre el despliegue del proyecto."
-        human_prompt = f"Proyecto: {project_name}\nURL: {primary_url}\nGenera el mensaje de compartición:"
+        system_prompt = "Generate a short and enthusiastic message ready to share on social media about the project deployment."
+        human_prompt = f"Project: {project_name}\nURL: {primary_url}\nGenerate the share message:"
         messages = [SystemMessage(content=system_prompt), HumanMessage(content=human_prompt)]
         try:
             response = llm_developer.invoke(messages)
             share_message = clean_txt_response(response.content)
         except Exception:
-            share_message = f"Acabo de desplegar {project_name} con devAIteam 🚀\nPuedes verlo en: {primary_url} — Generado 100% por IA en local"
+            share_message = f"I just deployed {project_name} with devAIteam 🚀\nYou can see it at: {primary_url} — Generated 100% by AI locally"
     else:
-        share_message = "Proyecto no desplegado automáticamente."
+        share_message = "Project not automatically deployed."
 
     return DeployOutput(
         project_name=project_name,

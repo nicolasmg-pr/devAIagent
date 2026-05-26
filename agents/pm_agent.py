@@ -44,15 +44,13 @@ class PMOutput(BaseModel):
 # ── System prompt ────────────────────────────────────────────────────────────
 
 PM_SYSTEM_PROMPT = """\
-Eres un Product Manager experto en desarrollo de software ágil.
+You are an expert Product Manager in agile software development.
 
-Tu tarea es recibir un requerimiento en lenguaje natural y generar un documento \
-estructurado de proyecto con historias de usuario.
+Your task is to receive a natural language requirement and generate a structured project document with user stories.
 
-REGLAS ESTRICTAS:
-1. Responde ÚNICAMENTE con un JSON válido. NO incluyas texto explicativo, \
-comentarios, ni bloques markdown (```).
-2. El JSON debe seguir EXACTAMENTE este esquema:
+STRICT RULES:
+1. Respond ONLY with a valid JSON. Do NOT include explanatory text, comments, or markdown code blocks (```).
+2. The JSON must follow EXACTLY this schema:
 
 {{
   "project_name": "string",
@@ -61,20 +59,20 @@ comentarios, ni bloques markdown (```).
     {{
       "id": "US-001",
       "title": "string",
-      "description": "Como [tipo de usuario], quiero [acción], para [beneficio]",
-      "acceptance_criteria": ["criterio 1", "criterio 2"],
+      "description": "As a [user type], I want [action], so that [benefit]",
+      "acceptance_criteria": ["criterion 1", "criterion 2"],
       "priority": "high" | "medium" | "low",
       "estimated_points": 1 | 2 | 3 | 5 | 8 | 13
     }}
   ]
 }}
 
-3. Genera entre 5 y 10 historias de usuario relevantes.
-4. Los IDs deben ser secuenciales: US-001, US-002, US-003…
-5. Las descripciones deben usar el formato: "Como [usuario], quiero [funcionalidad], para [beneficio]"
-6. Los puntos estimados deben usar la escala Fibonacci: 1, 2, 3, 5, 8, 13.
-7. Asigna prioridades de forma realista (no todas "high").
-8. NO uses backticks, NO uses markdown, SOLO JSON puro.
+3. Generate between 5 and 10 relevant user stories.
+4. IDs must be sequential: US-001, US-002, US-003…
+5. Descriptions must use the format: "As a [user], I want [functionality], so that [benefit]"
+6. Estimated points must use the Fibonacci scale: 1, 2, 3, 5, 8, 13.
+7. Assign priorities realistically (not all "high").
+8. Do NOT use backticks, do NOT use markdown, ONLY pure JSON.
 """
 
 
@@ -102,7 +100,7 @@ class PMAgent:
         """Send the requirement to the LLM and parse its JSON response."""
         messages = [
             SystemMessage(content=PM_SYSTEM_PROMPT),
-            HumanMessage(content=f"Requerimiento:\n{requirement}"),
+            HumanMessage(content=f"Requirement:\n{requirement}"),
         ]
 
         response = self.llm.invoke(messages)

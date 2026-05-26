@@ -32,7 +32,7 @@ def load_registry() -> List[ProjectMeta]:
             if isinstance(data, list):
                 return [ProjectMeta.model_validate(p) for p in data]
     except Exception as e:
-        print(f"⚠️ Error cargando el registro de proyectos: {e}")
+        print(f"⚠️ Error loading project registry: {e}")
     return []
 
 def save_project(meta: ProjectMeta) -> None:
@@ -54,7 +54,7 @@ def save_project(meta: ProjectMeta) -> None:
         with open(REGISTRY_PATH, "w", encoding="utf-8") as f:
             json.dump([p.model_dump() for p in registry], f, indent=2, ensure_ascii=False)
     except Exception as e:
-        print(f"❌ Error guardando el registro de proyectos: {e}")
+        print(f"❌ Error saving project registry: {e}")
 
 def get_project(project_name: str) -> Optional[ProjectMeta]:
     registry = load_registry()
@@ -71,4 +71,4 @@ def update_deploy_status(project_name: str, status: str, url: str, platform: str
         meta.deploy_platform = platform
         save_project(meta)
     else:
-        print(f"⚠️ No se encontró el proyecto '{project_name}' en el registro para actualizar deploy.")
+        print(f"⚠️ Project '{project_name}' not found in registry to update deploy.")

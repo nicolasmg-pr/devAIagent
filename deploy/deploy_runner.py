@@ -8,10 +8,10 @@ def run_deploy_command(project_name: str):
     output_path = f"./output/{project_name}"
     
     if not os.path.exists(output_path):
-        print(f"\n❌ Error: El directorio del proyecto '{project_name}' no existe en './output/'.")
+        print(f"\n❌ Error: The project directory '{project_name}' does not exist in './output/'.")
         projects = load_registry()
         if projects:
-            print("Proyectos disponibles en el registro:")
+            print("Available projects in the registry:")
             for p in projects:
                 print(f"  - {p.project_name}")
         else:
@@ -19,16 +19,16 @@ def run_deploy_command(project_name: str):
             if os.path.exists("./output"):
                 dirs = [d for d in os.listdir("./output") if os.path.isdir(os.path.join("./output", d)) and not d.startswith(".")]
                 if dirs:
-                    print("Directorios de proyectos disponibles:")
+                    print("Available project directories:")
                     for d in dirs:
                         print(f"  - {d}")
                 else:
-                    print("No se encontraron proyectos generados todavía.")
+                    print("No generated projects found yet.")
             else:
-                print("No se encontraron proyectos generados todavía.")
+                print("No generated projects found yet.")
         return
 
-    print(f"\n🚀 Iniciando proceso de despliegue para '{project_name}'...")
+    print(f"\n🚀 Starting deployment process for '{project_name}'...")
     
     # Run the deployment asynchronously
     loop = asyncio.new_event_loop()
@@ -42,10 +42,10 @@ def run_deploy_command(project_name: str):
     
     if primary_url and primary_url != "not_deployed":
         print("\n" + "═" * 40)
-        print("🎉 DESPLIEGUE COMPLETADO CON ÉXITO")
+        print("🎉 DEPLOYMENT SUCCESSFULLY COMPLETED")
         print("═" * 40)
         print(f"🌐 URL: {primary_url}")
-        print(f"📢 Mensaje para compartir:\n   \"{deploy_out.share_message}\"")
+        print(f"📢 Share Message:\n   \"{deploy_out.share_message}\"")
         
         # Determine platform deployed
         platform = "manual"
@@ -59,7 +59,7 @@ def run_deploy_command(project_name: str):
         print("═" * 40 + "\n")
     else:
         print("\n" + "═" * 40)
-        print("⚠️  GUÍA DE DESPLIEGUE MANUAL GENERADA")
+        print("⚠️  MANUAL DEPLOYMENT GUIDE GENERATED")
         print("═" * 40)
         print(deploy_out.instructions)
         print("═" * 40 + "\n")

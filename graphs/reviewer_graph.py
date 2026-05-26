@@ -48,12 +48,12 @@ def review_node(state: ReviewerState) -> dict:
     """Run the reviewer agent to produce a ReviewRound."""
     try:
         round_num = len(state.rounds) + 1
-        print(f"   🔍 Reviewer Agent generando revisión (Ronda {round_num})...")
+        print(f"   🔍 Reviewer Agent generating review (Round {round_num})...")
         
         last_decision = None
         if state.human_decisions:
             last_decision = state.human_decisions[-1].feedback
-
+ 
         new_round = run_reviewer(
             state.developer_output,
             state.qa_output,
@@ -74,7 +74,7 @@ def review_node(state: ReviewerState) -> dict:
 def format_review_node(state: ReviewerState) -> dict:
     """Format and print the current review round."""
     if state.error:
-        print(f"\n❌ Error en Code Review:\n{state.error}")
+        print(f"\n❌ Error in Code Review:\n{state.error}")
         return {}
 
     r = state.current_round
@@ -84,16 +84,16 @@ def format_review_node(state: ReviewerState) -> dict:
     emoji = "🟢" if "approved" in r.overall_verdict else "🔴"
     
     print("\n" + "━" * 40)
-    print(f"👁  CODE REVIEW — Ronda {r.round_number}")
+    print(f"👁  CODE REVIEW — Round {r.round_number}")
     print("━" * 40)
 
     if getattr(r, "think_content", None):
-        print("🧠 RAZONAMIENTO DEL REVIEWER:")
+        print("🧠 REVIEWER REASONING:")
         for line in r.think_content.strip().split("\n"):
             print(f"  > {line}")
         print()
 
-    print(f"Veredicto: {emoji} {r.overall_verdict} — {r.verdict_reason}")
+    print(f"Verdict: {emoji} {r.overall_verdict} — {r.verdict_reason}")
     print(f"🔴 Blocking: {r.blocking_count} | 🟠 Important: {r.important_count} | 💡 Suggestions: {r.suggestion_count}\n")
 
     severities = ["blocking", "important", "suggestion"]
@@ -106,9 +106,9 @@ def format_review_node(state: ReviewerState) -> dict:
             print(f"  📄 {c.file} ({c.line_reference})")
             print(f"  {c.comment}")
             if c.change:
-                print(f"    ANTES:   {c.change.original_snippet}")
-                print(f"    DESPUÉS: {c.change.proposed_snippet}")
-                print(f"    Razón:   {c.change.reason}")
+                print(f"    BEFORE:  {c.change.original_snippet}")
+                print(f"    AFTER:   {c.change.proposed_snippet}")
+                print(f"    Reason:  {c.change.reason}")
             print()
     print("━" * 40)
     return {}
@@ -118,7 +118,7 @@ def human_input_node(state: ReviewerState) -> dict:
     """Pause the graph and ask for human input."""
     # This invokes the langgraph interrupt, suspending the graph execution.
     # The string passed to interrupt is returned to the client (main.py).
-    human_input = interrupt("Esperando input del humano...")
+    human_input = interrupt("Waiting for human input...")
 
     # When resumed, human_input receives the payload from Command(resume=value)
     human_input = str(human_input).strip()
@@ -166,7 +166,7 @@ def _apply_code_change(change: CodeChange):
     base_dir = "/Users/nikomendez/Documents/SWdevAIgency_project"
     full_path = os.path.join(base_dir, change.file)
     if not os.path.exists(full_path):
-        print(f"⚠️  [Reviewer] Archivo no encontrado para aplicar cambio: {full_path}")
+        print(f"⚠️  [Reviewer] File not found to apply change: {full_path}")
         return
         
     try:
@@ -180,7 +180,7 @@ def _apply_code_change(change: CodeChange):
             content = content.replace(orig, prop)
             with open(full_path, "w", encoding="utf-8") as f:
                 f.write(content)
-            print(f"✅ [Reviewer] Cambio aplicado localmente con éxito en: {change.file}")
+            print(f"✅ [Reviewer] Change successfully applied locally in: {change.file}")
         else:
             # Simple fallback if exact match fails: search without leading/trailing whitespace
             lines = content.splitlines()
@@ -194,13 +194,13 @@ def _apply_code_change(change: CodeChange):
                     content = "\n".join(lines)
                     with open(full_path, "w", encoding="utf-8") as f:
                         f.write(content)
-                    print(f"✅ [Reviewer] Cambio aplicado localmente (soft match) en: {change.file}")
+                    print(f"✅ [Reviewer] Change applied locally (soft match) in: {change.file}")
                     found = True
                     break
             if not found:
-                print(f"⚠️  [Reviewer] No se pudo encontrar el fragmento original exacto en: {change.file}")
+                print(f"⚠️  [Reviewer] Could not find the exact original snippet in: {change.file}")
     except Exception as e:
-        print(f"❌ [Reviewer] Error aplicando cambio local en {change.file}: {e}")
+        print(f"❌ [Reviewer] Error applying local change in {change.file}: {e}")
 
 
 def _get_git_repo_name() -> Optional[tuple[str, str]]:
@@ -244,7 +244,7 @@ def finalize_node(state: ReviewerState) -> dict:
 
     # Apply approved changes locally
     if final_status in ["approved", "approved_with_suggestions"] and approved_changes:
-        print(f"💾 Aplicando {len(approved_changes)} cambios aprobados al espacio de trabajo...")
+        print(f"💾 Applying {len(approved_changes)} approved changes to the workspace...")
         for change in approved_changes:
             _apply_code_change(change)
 
@@ -270,12 +270,12 @@ def github_node(state: ReviewerState) -> dict:
     if not state.final_output.approved_changes:
         return {}
         
-    print("🐙 [Github Node] Creando rama y abriendo Pull Request en GitHub...")
+    print("🐙 [Github Node] Creating branch and opening Pull Request on GitHub...")
     try:
         github_res = _run_async_in_thread(create_github_pr(state.final_output, state.developer_output))
         return {"github_output": github_res}
     except Exception as exc:
-        print(f"⚠️ [Github Node] Falló la integración con GitHub: {exc}")
+        print(f"⚠️ [Github Node] GitHub integration failed: {exc}")
         return {"github_output": {"status": "failed", "error": str(exc)}}
 
 
@@ -289,13 +289,13 @@ def format_final_node(state: ReviewerState) -> dict:
         return {}
 
     print("\n╔══════════════════════════════════════════╗")
-    print("║        CODE REVIEW COMPLETADO            ║")
+    print("║          CODE REVIEW COMPLETED           ║")
     print("╠══════════════════════════════════════════╣")
-    print(f"║ Estado: {out.final_status.ljust(32)} ║")
-    print(f"║ Rondas: {str(len(out.rounds)).ljust(2)} de {str(state.max_rounds).ljust(25)} ║")
-    print(f"║ Cambios propuestos: {str(out.total_changes_proposed).ljust(20)} ║")
-    print(f"║ Cambios aprobados: {str(len(out.approved_changes)).ljust(21)} ║")
-    print(f"║ Decisiones humanas: {str(len(out.human_decisions)).ljust(20)} ║")
+    print(f"║ Status: {out.final_status.ljust(32)} ║")
+    print(f"║ Rounds: {str(len(out.rounds)).ljust(2)} of {str(state.max_rounds).ljust(25)} ║")
+    print(f"║ Changes proposed: {str(out.total_changes_proposed).ljust(22)} ║")
+    print(f"║ Changes approved: {str(len(out.approved_changes)).ljust(22)} ║")
+    print(f"║ Human decisions: {str(len(out.human_decisions)).ljust(22)} ║")
     
     if state.github_output:
         res = state.github_output
@@ -303,11 +303,11 @@ def format_final_node(state: ReviewerState) -> dict:
             pr_val = res.get("pr_url", "")
             branch_val = res.get("branch", "")
             print(f"║ PR: {pr_val[:35].ljust(36)} ║")
-            print(f"║ Rama: {branch_val[:33].ljust(34)} ║")
+            print(f"║ Branch: {branch_val[:31].ljust(32)} ║")
         else:
-            print("║ PR: Falló la creación en GitHub         ║")
+            print("║ PR: Failed to create on GitHub          ║")
     else:
-        print("║ PR: No se requirió/creó push a GitHub    ║")
+        print("║ PR: GitHub push was not required         ║")
         
     print("╚══════════════════════════════════════════╝\n")
     return {}

@@ -38,12 +38,12 @@ def pm_node(state: PMState) -> dict:
 def format_node(state: PMState) -> dict:
     """Pretty-print the PM output with emojis and priority icons."""
     if state.error:
-        print(f"\n❌ Error durante la ejecución del PM Agent:\n{state.error}")
+        print(f"\n❌ Error during PM Agent execution:\n{state.error}")
         return {}
 
     output = state.pm_output
     if output is None:
-        print("\n⚠️  No se generó output.")
+        print("\n⚠️  No output was generated.")
         return {}
 
     priority_icons = {
@@ -53,26 +53,26 @@ def format_node(state: PMState) -> dict:
     }
 
     print("\n" + "=" * 60)
-    print(f"📋 Proyecto: {output.project_name}")
+    print(f"📋 Project: {output.project_name}")
     print("=" * 60)
-    print(f"\n📝 Resumen:\n{output.summary}\n")
+    print(f"\n📝 Summary:\n{output.summary}\n")
     print("-" * 60)
-    print(f"📌 Historias de Usuario ({len(output.user_stories)}):")
+    print(f"📌 User Stories ({len(output.user_stories)}):")
     print("-" * 60)
 
     for story in output.user_stories:
         icon = priority_icons.get(story.priority, "⚪")
         print(f"\n{icon} [{story.id}] {story.title}")
         print(f"   📖 {story.description}")
-        print(f"   🎯 Prioridad: {story.priority}  |  📊 Puntos: {story.estimated_points}")
-        print("   ✅ Criterios de aceptación:")
+        print(f"   🎯 Priority: {story.priority}  |  📊 Points: {story.estimated_points}")
+        print("   ✅ Acceptance criteria:")
         for criterion in story.acceptance_criteria:
             print(f"      • {criterion}")
 
     print("\n" + "=" * 60)
-    print(f"✨ Total de historias: {len(output.user_stories)}")
+    print(f"✨ Total stories: {len(output.user_stories)}")
     total_points = sum(s.estimated_points for s in output.user_stories)
-    print(f"📊 Puntos totales estimados: {total_points}")
+    print(f"📊 Estimated total points: {total_points}")
     print("=" * 60 + "\n")
 
     return {}

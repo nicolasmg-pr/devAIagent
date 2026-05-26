@@ -15,10 +15,10 @@ class UIDesignerState(TypedDict):
 
 def ui_designer_node(state: UIDesignerState) -> dict:
     """Executes the UI Designer Agent using Google Stitch."""
-    print("🎨 Iniciando UI Designer Agent...")
+    print("🎨 Starting UI Designer Agent...")
     stitch_api_key = os.environ.get("STITCH_API_KEY")
     if not stitch_api_key:
-        print("⚠️  [UI Designer] STITCH_API_KEY no se encontró en las variables de entorno.")
+        print("⚠️  [UI Designer] STITCH_API_KEY was not found in the environment variables.")
     output = run_ui_designer_agent(state["architect_output"], stitch_api_key)
     return {"ui_designer_output": output}
 

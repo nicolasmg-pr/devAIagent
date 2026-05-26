@@ -1,14 +1,14 @@
 """
-Configuración centralizada del LLM para todo el proyecto.
-Cambiar de motor local solo requiere editar este archivo.
+Centralized LLM configuration for the entire project.
+Switching the local engine only requires editing this file.
 """
 
 from langchain_openai import ChatOpenAI
 
-# --- Configuración base MLX ---
+# --- Base MLX Configuration ---
 MLX_BASE_URL = "http://localhost:8000/v1"
 MLX_MODEL = "Qwen3.6-35B-A3B-UD-MLX-4bit"
-MLX_API_KEY = "EMPTY"  # MLX no requiere autenticación
+MLX_API_KEY = "EMPTY"  # MLX does not require authentication
 
 def get_llm(
     temperature: float = 0.7,
@@ -16,16 +16,16 @@ def get_llm(
     max_tokens: int = 8192,
 ) -> ChatOpenAI:
     """
-    Devuelve el LLM configurado para MLX local.
+    Returns the LLM configured for local MLX.
 
     Args:
-        temperature: 0.0-1.0. Usar 0.3 para tareas precisas (QA, Reviewer),
-                     0.7 para generación (Developer, Designer),
-                     1.0 para creatividad (PM, Architect)
-        thinking: Si True, activa el modo de razonamiento de Qwen3.6
-                  (genera bloques <think>). Solo para Code Reviewer.
-                  Si False, respuesta directa sin chain-of-thought visible.
-        max_tokens: Límite de tokens en la respuesta.
+        temperature: 0.0-1.0. Use 0.3 for precise tasks (QA, Reviewer),
+                     0.7 for generation (Developer, Designer),
+                     1.0 for creativity (PM, Architect)
+        thinking: If True, activates reasoning mode of Qwen3.6
+                  (generates <think> blocks). Only for Code Reviewer.
+                  If False, direct response without visible chain-of-thought.
+        max_tokens: Token limit in response.
     """
     return ChatOpenAI(
         base_url=MLX_BASE_URL,
@@ -38,9 +38,9 @@ def get_llm(
         }
     )
 
-# --- Instancias preconfiguradas para cada agente ---
-# Usamos __getattr__ para devolver una nueva instancia en cada acceso,
-# lo que previene errores de concurrencia de Pydantic en hilos paralelos de LangGraph.
+# --- Preconfigured instances for each agent ---
+# We use __getattr__ to return a new instance on each access,
+# which prevents concurrency errors from Pydantic in parallel LangGraph threads.
 
 llm_pm: ChatOpenAI
 llm_architect: ChatOpenAI
