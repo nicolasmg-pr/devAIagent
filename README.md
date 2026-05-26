@@ -92,8 +92,8 @@ RAILWAY_TOKEN=your_railway_token_here
 RENDER_API_KEY=your_render_api_key_here
 
 # GitHub Integrations (Highly Recommended for Code Review & RM commands)
-GITHUB_OWNER=nicolasmg-pr
-GITHUB_REPO=devAIagent
+GITHUB_OWNER=your_github_username_here
+GITHUB_REPO=your_github_repo_name_here
 GITHUB_PERSONAL_ACCESS_TOKEN=your_github_pat_token
 
 # Google Stitch Keys (Optional for UI Designer)
