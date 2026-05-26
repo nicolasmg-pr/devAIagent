@@ -271,9 +271,10 @@ async def create_github_pr(reviewer_output: ReviewerOutput, developer_output: De
     owner = os.getenv("GITHUB_OWNER", "nikomendez")
     repo = os.getenv("GITHUB_OUTPUT_REPO") or os.getenv("GITHUB_PROJECT_REPO")
     if not repo:
+        proj_clean = developer_output.project_name.lower().replace(" ", "-").replace("_", "-")
         print("⚠️  [GitHub] GITHUB_OUTPUT_REPO is not set in your .env file.")
-        print("   -> Defaulting to repository 'nicosthings'. Make sure you have created this repository on GitHub!")
-        repo = "nicosthings"
+        print(f"   -> Defaulting dynamically to repository name: '{proj_clean}'. Make sure you have created this repository on GitHub!")
+        repo = proj_clean
     
     # Check if tools are present and valid
     github_available = all(k in tool_map for k in ["create_branch", "create_or_update_file", "create_pull_request"])
