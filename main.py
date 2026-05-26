@@ -42,6 +42,7 @@ def main() -> None:
   ║    devAIteam deploy <project>      deploy project   ║
   ║    devAIteam rm <project>          delete local     ║
   ║    devAIteam rm <project> --all    delete all       ║
+  ║    devAIteam prune                 clean registry   ║
   ║                                                     ║
   ║  DIAGNOSTICS & SYSTEM:                              ║
   ║    devAIteam doctor                check MCP tools  ║
@@ -88,6 +89,12 @@ def main() -> None:
         delete_all = "--all" in args
         from deploy.rm_runner import run_rm_command
         run_rm_command(args[1], delete_all=delete_all)
+        return
+
+    # devAIteam prune
+    if command == "prune":
+        from deploy.rm_runner import run_prune_command
+        run_prune_command()
         return
 
     # If it is not a CLI command, treat it as the user's original requirement

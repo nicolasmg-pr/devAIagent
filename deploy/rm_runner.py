@@ -244,3 +244,49 @@ This action CANNOT be undone. Confirm? [y/N]: """, end="")
 """)
         else:
             print(f"\n✅ '{project_name}' completely deleted.\n")
+
+
+def run_prune_command():
+    """Detect and remove registry entries for projects whose local code directories no longer exist."""
+    registry = load_registry()
+    if not registry:
+        print("\nRegistry is empty. Nothing to prune.\n")
+        return
+
+    to_prune = []
+    for p in registry:
+        output_path = f"./output/{p.project_name}"
+        if not os.path.exists(output_path):
+            to_prune.append(p)
+
+    if not to_prune:
+        print("\nAll registered projects exist locally. Nothing to prune.\n")
+        return
+
+    print("\n🔍 Detected projects in registry with missing local directories:")
+    for idx, p in enumerate(to_prune, 1):
+        print(f"  {idx}. {p.project_name} (Created: {p.created_at})")
+
+    print(f"\nConfirm pruning these {len(to_prune)} entries from the registry? [y/N]: ", end="")
+    try:
+        confirm = input().strip().lower()
+    except (KeyboardInterrupt, EOFError):
+        print("\n❌ Operation cancelled.")
+        return
+
+    if confirm not in ["y", "yes", "s", "si"]:
+        print("❌ Operation cancelled.")
+        return
+
+    pruned_names = {p.project_name for p in to_prune}
+    new_registry = [p for p in registry if p.project_name not in pruned_names]
+
+    try:
+        os.makedirs("./output", exist_ok=True)
+        with open("./output/.registry.json", "w", encoding="utf-8") as f:
+            import json
+            json.dump([p.model_dump() for p in new_registry], f, indent=2, ensure_ascii=False)
+        print(f"\n✅ Successfully pruned {len(to_prune)} missing entries from the registry!\n")
+    except Exception as e:
+        print(f"\n❌ Error updating project registry during prune: {e}\n")
+
