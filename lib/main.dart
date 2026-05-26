@@ -1,51 +1,32 @@
 import 'package:flutter/material.dart';
-import 'presentation/screens/home_screen.dart';
-import 'presentation/screens/vessel_form_screen.dart';
-import 'presentation/screens/checklist_screen.dart';
+import 'package:provider/provider.dart';
+import 'providers/vessel_provider.dart';
+import 'providers/checklist_provider.dart';
+import 'screens/vessel_registration_screen.dart';
 
 void main() {
-  runApp(const MarineCheckProApp());
+  runApp(const MaritimeChecklistApp());
 }
 
-class MarineCheckProApp extends StatelessWidget {
-  const MarineCheckProApp({Key? key}) : super(key: key);
+class MaritimeChecklistApp extends StatelessWidget {
+  const MaritimeChecklistApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'MarineCheck Pro',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        colorScheme: ColorScheme.fromSwatch(
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => VesselProvider()),
+        ChangeNotifierProvider(create: (_) => ChecklistProvider()),
+      ],
+      child: MaterialApp(
+        title: 'Maritime Pre-Sailing Checklist',
+        theme: ThemeData(
           primarySwatch: Colors.blue,
-          accentColor: Colors.orange,
-        ).copyWith(
-          secondary: Colors.orange,
+          brightness: Brightness.light,
+          useMaterial3: true,
         ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.blue,
-          foregroundColor: Colors.white,
-          elevation: 4,
-        ),
-        cardTheme: CardTheme(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
+        home: const VesselRegistrationScreen(),
       ),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const HomeScreen(),
-        '/vessel': (context) => const VesselFormScreen(),
-        '/checklist': (context) => const ChecklistScreen(),
-      },
     );
   }
 }

@@ -37,7 +37,7 @@ async def delete_github_resources(project_name: str, github_pr_url: Optional[str
         return res
         
     owner = os.getenv("GITHUB_OWNER", "nikomendez")
-    repo = os.getenv("GITHUB_REPO", "ai-dev-team")
+    repo = os.getenv("GITHUB_OUTPUT_REPO") or os.getenv("GITHUB_PROJECT_REPO") or "nicosthings"
     
     try:
         tools = get_mcp_tools(GITHUB_MCP_CONFIG, "stdio")

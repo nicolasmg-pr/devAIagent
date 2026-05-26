@@ -82,7 +82,10 @@ def run_ui_designer_agent(architect_output: ArchitectOutput, stitch_api_key: str
     try:
         json_str = clean_llm_response(final_message)
         data = json_repair.loads(json_str)
-        return UIDesignerOutput(**data)
+        if isinstance(data, dict):
+            return UIDesignerOutput.model_validate(data)
+        else:
+            raise ValueError("Parsed UI Designer output is not a dictionary.")
     except Exception as e:
         print(f"⚠️ [UIDesigner] Error parsing JSON output: {e}")
         # Fallback empty UI

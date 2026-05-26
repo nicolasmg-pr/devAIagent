@@ -269,7 +269,7 @@ async def create_github_pr(reviewer_output: ReviewerOutput, developer_output: De
     tool_map = {t.name: t for t in tools} if tools else {}
     
     owner = os.getenv("GITHUB_OWNER", "nikomendez")
-    repo = os.getenv("GITHUB_REPO", "ai-dev-team")
+    repo = os.getenv("GITHUB_OUTPUT_REPO") or os.getenv("GITHUB_PROJECT_REPO") or "nicosthings"
     
     # Check if tools are present and valid
     github_available = all(k in tool_map for k in ["create_branch", "create_or_update_file", "create_pull_request"])
