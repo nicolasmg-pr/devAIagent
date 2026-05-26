@@ -50,6 +50,25 @@ PROCESS TO FOLLOW:
 ```
 Do not include any text outside the final JSON."""
 
+from typing import Any
+
+def _extract_nested_json(data: Any) -> Any:
+    """Helper to extract nested JSON string if the parsed output is wrapped in a JSON-RPC / content envelope."""
+    if isinstance(data, dict):
+        if "result" in data:
+            return _extract_nested_json(data["result"])
+        if "content" in data and isinstance(data["content"], list) and len(data["content"]) > 0:
+            first_block = data["content"][0]
+            if isinstance(first_block, dict) and "text" in first_block:
+                text_content = first_block["text"]
+                try:
+                    inner_cleaned = clean_llm_response(text_content)
+                    inner_data = json_repair.loads(inner_cleaned)
+                    return _extract_nested_json(inner_data)
+                except Exception:
+                    pass
+    return data
+
 # ── Public API ─────────────────────────────────────────────────────────────────
 
 def run_ui_designer_agent(architect_output: ArchitectOutput, stitch_api_key: str) -> UIDesignerOutput:
@@ -81,7 +100,8 @@ def run_ui_designer_agent(architect_output: ArchitectOutput, stitch_api_key: str
     # Parse the final JSON from the agent's last message
     try:
         json_str = clean_llm_response(final_message)
-        data = json_repair.loads(json_str)
+        raw_data = json_repair.loads(json_str)
+        data = _extract_nested_json(raw_data)
         if isinstance(data, dict):
             return UIDesignerOutput.model_validate(data)
         else:
