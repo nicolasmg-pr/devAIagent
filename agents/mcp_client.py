@@ -69,9 +69,9 @@ class ThreadSafeMCPClient:
                 output_text += getattr(block, "text", "") + "\n"
         
         output_stripped = output_text.strip()
-        if len(output_stripped) > 4000:
-            print(f"⚠️  [MCP] Truncating response from {name} ({len(output_stripped)} characters -> 4000)")
-            output_stripped = output_stripped[:4000] + "\n\n... [TRUNCATED - Output too long for LLM context window] ..."
+        if len(output_stripped) > 7000:
+            print(f"⚠️  [MCP] Truncating response from {name} ({len(output_stripped)} characters -> 7000)")
+            output_stripped = output_stripped[:7000] + "\n\n... [TRUNCATED - Output too long for LLM context window] ..."
         return output_stripped
 
     def get_tools(self) -> List[StructuredTool]:
