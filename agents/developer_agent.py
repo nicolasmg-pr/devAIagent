@@ -241,8 +241,8 @@ def _write_generated_files(files: list[CodeFile]):
             out.write(f.content)
 
 
-async def save_files_to_filesystem(developer_output: DeveloperOutput):
-    """Save backend and frontend generated files to the filesystem using MCP or fallback to python."""
+async def save_files_to_filesystem(developer_output: DeveloperOutput, architect_output: Optional[ArchitectOutput] = None):
+    """Save backend and frontend generated files to the filesystem using MCP or fallback to python, and auto-generate a professional project README.md."""
     from agents.mcp_client import get_mcp_tools, FILESYSTEM_MCP_CONFIG
     
     # 1. Connect to Filesystem MCP
@@ -252,6 +252,118 @@ async def save_files_to_filesystem(developer_output: DeveloperOutput):
     output_dir = "./output"
     os.makedirs(output_dir, exist_ok=True)
     
+    project_clean = developer_output.project_name.lower().replace(" ", "-").replace("_", "-")
+    project_output_dir = os.path.join(output_dir, project_clean)
+    os.makedirs(project_output_dir, exist_ok=True)
+    
+    # ── Auto-Generate Project README.md ───────────────────────────────────────
+    readme_content = ""
+    try:
+        project_name = developer_output.project_name
+        
+        # Tech stack compilation
+        tech_summary = ""
+        db_summary = ""
+        api_summary = ""
+        mermaid_code = ""
+        decisions_summary = ""
+        
+        if architect_output:
+            tech_summary = (
+                f"- **Backend**: {architect_output.tech_stack.backend}\n"
+                f"- **Frontend**: {architect_output.tech_stack.frontend}\n"
+                f"- **Database**: {architect_output.tech_stack.database}\n"
+                f"- **Infrastructure**: {architect_output.tech_stack.infrastructure}\n"
+                f"- **Tools & Libraries**: {', '.join(architect_output.tech_stack.additional_tools)}\n"
+                f"- **Architecture Pattern**: {architect_output.architecture_pattern}"
+            )
+            
+            entities = []
+            for ent in architect_output.database_entities:
+                fields_str = ", ".join(ent.fields)
+                rel_str = ", ".join(ent.relationships) if ent.relationships else "None"
+                entities.append(f"| {ent.name} | {fields_str} | {rel_str} |")
+            db_summary = "\n".join(entities) if entities else "| None | - | - |"
+            
+            endpoints = []
+            for ep in architect_output.api_endpoints:
+                endpoints.append(f"| `{ep.method}` | `{ep.path}` | {ep.description} |")
+            api_summary = "\n".join(endpoints) if endpoints else "| None | - | - |"
+            
+            mermaid_code = architect_output.mermaid_diagram
+            decisions_summary = "\n".join([f"- {d}" for d in architect_output.key_decisions])
+        else:
+            tech_summary = "- **Backend**: NestJS + TypeScript\n- **Frontend**: Flutter + Dart\n- **Database**: PostgreSQL"
+            db_summary = "| Defined in database entities |"
+            api_summary = "| Defined in API controllers |"
+            
+        integration_notes = "\n".join([f"- {note}" for note in developer_output.integration_notes])
+        
+        backend_deps = ", ".join(developer_output.backend.dependencies) if developer_output.backend else "None"
+        backend_cmds = "\n".join([f"  $ {cmd}" for cmd in developer_output.backend.setup_commands]) if developer_output.backend else "None"
+        
+        frontend_deps = ", ".join(developer_output.frontend.dependencies) if developer_output.frontend else "None"
+        frontend_cmds = "\n".join([f"  $ {cmd}" for cmd in developer_output.frontend.setup_commands]) if developer_output.frontend else "None"
+
+        # Construct LLM prompt for the Technical Writer
+        prompt = (
+            f"You are an elite Technical Writer and Software Architect.\n"
+            f"Your task is to write a highly professional, beautifully formatted, and comprehensive README.md "
+            f"for the generated software project named '{project_name}'.\n\n"
+            f"Here is the technical details and inputs compiled from the generation process:\n\n"
+            f"--- PROJECT NAME ---\n"
+            f"{project_name}\n\n"
+            f"--- TECHNOLOGY STACK & ARCHITECTURE ---\n"
+            f"{tech_summary}\n\n"
+            f"--- DATABASE ENTITIES & SCHEMA ---\n"
+            f"| Entity Name | Fields | Relationships |\n"
+            f"|---|---|---|\n"
+            f"{db_summary}\n\n"
+            f"--- API REST ENDPOINTS ---\n"
+            f"| Method | Path | Description |\n"
+            f"|---|---|---|\n"
+            f"{api_summary}\n\n"
+            f"--- MERMAID ARCHITECTURE DIAGRAM ---\n"
+            f"```mermaid\n"
+            f"{mermaid_code}\n"
+            f"```\n\n"
+            f"--- KEY ARCHITECTURAL DECISIONS ---\n"
+            f"{decisions_summary}\n\n"
+            f"--- BACKEND SETUP & DEPENDENCIES ---\n"
+            f"Dependencies: {backend_deps}\n"
+            f"Setup commands:\n{backend_cmds}\n\n"
+            f"--- FRONTEND SETUP & DEPENDENCIES ---\n"
+            f"Dependencies: {frontend_deps}\n"
+            f"Setup commands:\n{frontend_cmds}\n\n"
+            f"--- INTEGRATION NOTES ---\n"
+            f"{integration_notes}\n\n"
+            f"INSTRUCTIONS:\n"
+            f"1. Generate a stunning, complete README.md in English (and only in English).\n"
+            f"2. Use premium styling with modern typography, markdown headers, emoji icons, beautifully formatted lists, and tables.\n"
+            f"3. Do NOT use any placeholders. Write detailed, complete sections.\n"
+            f"4. Structure the document with these exact sections:\n"
+            f"   - **Header with Emojis & Description**\n"
+            f"   - **Architecture & System Design** (including the Mermaid diagram and key architectural decisions)\n"
+            f"   - **Database Schema & Entity Relationship** (with a clean summary table)\n"
+            f"   - **API Endpoints Reference** (with a clean method table)\n"
+            f"   - **Installation & Setup Guide** (providing step-by-step instructions for both backend and frontend, separating dependencies installation and run commands)\n"
+            f"   - **Integration & Communication Guidelines** (explaining CORS, base URLs, authentication mechanisms, DTO mapping, and environment variables)\n"
+            f"   - **Local Preview & DevOps Guidelines** (explaining how Docker Compose or local servers spin up the stack)\n"
+            f"5. Return ONLY the raw markdown of the README. Do NOT wrap it in any additional markdown code block or backticks, just start with '# Project Name'."
+        )
+        
+        messages = [
+            SystemMessage(content="You are an elite Technical Writer and Software Architect. Write a gorgeous, extensive, production-ready project README in Markdown."),
+            HumanMessage(content=prompt)
+        ]
+        
+        print("📝 Generating project README.md using Technical Writer LLM...")
+        res = llm_developer.invoke(messages)
+        readme_content = res.content.strip()
+    except Exception as exc:
+        print(f"⚠️ Error generating README markdown via LLM: {exc}")
+        readme_content = f"# {developer_output.project_name}\n\nAuto-generated project using devAIteam."
+        
     all_files = []
     if developer_output.backend and developer_output.backend.files:
         all_files.extend(developer_output.backend.files)
@@ -281,7 +393,7 @@ async def save_files_to_filesystem(developer_output: DeveloperOutput):
         
         # Fallback to python
         try:
-            fallback_full_path = os.path.join(output_dir, rel_path)
+            fallback_full_path = os.path.join(project_output_dir, rel_path)
             parent_dir = os.path.dirname(fallback_full_path)
             os.makedirs(parent_dir, exist_ok=True)
             with open(fallback_full_path, "w", encoding="utf-8") as out_f:
@@ -289,6 +401,55 @@ async def save_files_to_filesystem(developer_output: DeveloperOutput):
             print(f"📄 Saved (Local Fallback): {f.path}/{f.filename}")
         except Exception as e:
             print(f"❌ Error writing local fallback file: {e}")
+
+    # ── Write Project README.md to appropriate paths ──────────────────────────
+    if readme_content:
+        # A. Save under './output/{project_clean}/README.md' for isolation
+        readme_output_path = os.path.join(project_output_dir, "README.md")
+        try:
+            with open(readme_output_path, "w", encoding="utf-8") as rf:
+                rf.write(readme_content)
+            print(f"📄 Generated project README saved to: {readme_output_path}")
+        except Exception as e:
+            print(f"❌ Error writing project output README: {e}")
+            
+        # B. Save to workspace root '/Users/nikomendez/Documents/SWdevAIgency_project/README_PROJECT.md' 
+        # to avoid overwriting devAIteam platform's own README.md in the root.
+        # But wait! If the platform's README is clean or the user wants it at README.md,
+        # let's check if the root README is the platform README (contains "# devAIteam").
+        # If it DOES NOT contain "# devAIteam", we can safely save it as README.md in root!
+        # If it DOES contain "# devAIteam", we save it as README_PROJECT.md and tell the user!
+        # This is incredibly safe and smart.
+        root_readme_path = "/Users/nikomendez/Documents/SWdevAIgency_project/README.md"
+        is_platform_readme = False
+        if os.path.exists(root_readme_path):
+            try:
+                with open(root_readme_path, "r", encoding="utf-8") as rf:
+                    header = rf.read(200)
+                    if "# devAIteam" in header:
+                        is_platform_readme = True
+            except Exception:
+                pass
+                
+        target_root_readme = root_readme_path if not is_platform_readme else "/Users/nikomendez/Documents/SWdevAIgency_project/README_PROJECT.md"
+        
+        if mcp_available:
+            try:
+                print(f"🚀 [Filesystem MCP] Saving README to: {os.path.basename(target_root_readme)}...")
+                tool_map["write_file"].invoke({
+                    "path": target_root_readme,
+                    "content": readme_content
+                })
+                print(f"📄 Saved project README in workspace as: {os.path.basename(target_root_readme)}")
+            except Exception as e:
+                print(f"⚠️ [Filesystem MCP] Error writing workspace README: {e}. Using local fallback...")
+        else:
+            try:
+                with open(target_root_readme, "w", encoding="utf-8") as rf:
+                    rf.write(readme_content)
+                print(f"📄 Saved project README (Local Fallback) in workspace as: {os.path.basename(target_root_readme)}")
+            except Exception as e:
+                print(f"❌ Error writing workspace fallback README: {e}")
 
     # ── Safe Setup Command Execution ─────────────────────────────────────────
     try:

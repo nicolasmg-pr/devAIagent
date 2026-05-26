@@ -106,7 +106,7 @@ def filesystem_node(state: DeveloperState) -> dict:
         return {}
     print("💾 [Filesystem Node] Saving development files to the system...")
     try:
-        _run_async_in_thread(save_files_to_filesystem(state.developer_output))
+        _run_async_in_thread(save_files_to_filesystem(state.developer_output, state.architect_output))
     except Exception as exc:
         print(f"⚠️ [Filesystem Node] Error saving files: {exc}")
     return {}
