@@ -43,9 +43,9 @@ def main() -> None:
   ║    devAIteam rm <project>          delete local     ║
   ║    devAIteam rm <project> --all    delete all       ║
   ║    devAIteam prune                 clean registry   ║
-  ║                                                     ║
   ║  DIAGNOSTICS & SYSTEM:                              ║
   ║    devAIteam doctor                check MCP tools  ║
+  ║    devAIteam clean                 clean system RAM ║
   ╚══════════════════════════════════════════════════════╝
       """)
         print("🤖 Describe your project (or CTRL+C to exit):")
@@ -59,6 +59,12 @@ def main() -> None:
         args = [requirement]
 
     command = args[0].lower()
+
+    # devAIteam clean
+    if command == "clean":
+        from deploy.clean_runner import run_clean_command
+        run_clean_command()
+        return
 
     # devAIteam doctor / check / mcp
     if command in ["doctor", "check", "mcp"]:
@@ -294,6 +300,39 @@ def main() -> None:
         devops_val = "Simulated / Docker Compose Generated"
     print(f"║ 🚀 DevOps:        {devops_val[:53].ljust(53)} ║")
     print("╚══════════════════════════════════════════════════════════════════════════╝\n")
+
+    # ── Memory Cleanup Prompts ─────────────────────────────────────────
+    # A. Clean Docker VM RAM
+    if local_preview_output and local_preview_output.preview_ready:
+        print("💡 [Memory Cleanup]")
+        print("   The local preview containers are currently running, consuming ~4GB in the Docker VM.")
+        try:
+            cleanup_docker = input("❓ Do you want to stop the local preview Docker containers to free up RAM? [y/N]: ").strip().lower()
+            if cleanup_docker in ["y", "yes"]:
+                import shutil
+                import subprocess
+                print(f"⚙️ [Cleanup] Stopping Docker containers for project '{proj_name}'...")
+                cmd = ["docker", "compose", "down"]
+                if not shutil.which("docker"):
+                    cmd = ["docker-compose", "down"]
+                subprocess.run(cmd, cwd=f"./output/{proj_name}", capture_output=True)
+                print("✅ [Cleanup] Docker preview containers successfully stopped. RAM reclaimed!")
+        except (KeyboardInterrupt, EOFError):
+            pass
+            
+    # B. Clean Python RAM from MLX local server
+    try:
+        cleanup_mlx = input("❓ Do you want to stop the local MLX server to reclaim 20GB of Python memory? [y/N]: ").strip().lower()
+        if cleanup_mlx in ["y", "yes"]:
+            from deploy.clean_runner import kill_mlx_server
+            kill_mlx_server()
+    except (KeyboardInterrupt, EOFError):
+        pass
+
+    # C. Instantly kill this python process to free 100% of memory and dangling threads
+    import os
+    print("👋 Exiting cleanly...")
+    os._exit(0)
 
 if __name__ == "__main__":
     main()
