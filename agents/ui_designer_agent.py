@@ -80,6 +80,79 @@ def _extract_nested_json(data: Any) -> Any:
 
 # ── Public API ─────────────────────────────────────────────────────────────────
 
+def _extract_screens_from_history(messages: List[Any]) -> List[UIScreen]:
+    screens: List[UIScreen] = []
+    seen_urls = set()
+
+    def scan_obj(obj: Any):
+        if isinstance(obj, list):
+            for item in obj:
+                scan_obj(item)
+        elif isinstance(obj, dict):
+            # Check if it matches a Stitch API screen structure with a screenshot
+            if "screenshot" in obj and isinstance(obj["screenshot"], dict):
+                url = obj["screenshot"].get("name") or obj["screenshot"].get("url") or ""
+                screen_name = obj.get("name") or obj.get("title") or obj["screenshot"].get("title") or "Unnamed Screen"
+                description = obj.get("description") or obj.get("prompt") or ""
+                html_content = obj.get("html") or obj.get("html_content") or ""
+                if url and url not in seen_urls:
+                    seen_urls.add(url)
+                    screens.append(UIScreen(
+                        name=screen_name,
+                        description=description,
+                        stitch_screen_url=url,
+                        html_content=html_content
+                    ))
+            # Also check if it matches a standard UIScreen structure (perhaps returned by the agent)
+            elif ("stitch_screen_url" in obj or "stitchScreenUrl" in obj) and (obj.get("stitch_screen_url") or obj.get("stitchScreenUrl")):
+                url = obj.get("stitch_screen_url") or obj.get("stitchScreenUrl") or ""
+                screen_name = obj.get("name") or obj.get("title") or "Unnamed Screen"
+                description = obj.get("description") or ""
+                html_content = obj.get("html_content") or obj.get("html") or ""
+                if url and url not in seen_urls:
+                    seen_urls.add(url)
+                    screens.append(UIScreen(
+                        name=screen_name,
+                        description=description,
+                        stitch_screen_url=url,
+                        html_content=html_content
+                    ))
+            
+            # Recurse into all keys to find nested screens
+            for k, v in obj.items():
+                scan_obj(v)
+
+    for msg in messages:
+        content = getattr(msg, "content", "")
+        if not isinstance(content, str) or not content.strip():
+            continue
+            
+        content_stripped = content.strip()
+        start_idx = 0
+        while True:
+            first_brace = content_stripped.find("{", start_idx)
+            first_bracket = content_stripped.find("[", start_idx)
+            
+            if first_brace == -1 and first_bracket == -1:
+                break
+                
+            if first_brace != -1 and (first_bracket == -1 or first_brace < first_bracket):
+                start = first_brace
+            else:
+                start = first_bracket
+                
+            try:
+                parsed = json_repair.loads(content_stripped[start:])
+                scan_obj(parsed)
+            except Exception:
+                pass
+                
+            start_idx = start + 1
+            if start_idx >= len(content_stripped):
+                break
+
+    return screens
+
 def run_ui_designer_agent(architect_output: ArchitectOutput, stitch_api_key: str) -> UIDesignerOutput:
     """Uses Google Stitch to design UI screens based on the architecture."""
     
@@ -106,28 +179,46 @@ def run_ui_designer_agent(architect_output: ArchitectOutput, stitch_api_key: str
     
     # Search backwards for the last AIMessage to get the LLM's final structured text
     final_message = ""
-    for msg in reversed(response["messages"]):
+    messages_list = response.get("messages", []) if isinstance(response, dict) else getattr(response, "messages", [])
+    
+    for msg in reversed(messages_list):
         if getattr(msg, "type", None) == "ai" and msg.content:
             final_message = msg.content
             break
             
-    if not final_message and response["messages"]:
-        final_message = response["messages"][-1].content
+    if not final_message and messages_list:
+        final_message = messages_list[-1].content
     
     # Parse the final JSON from the agent's last message
+    parsed_output = None
     try:
         json_str = clean_llm_response(final_message)
         raw_data = json_repair.loads(json_str)
         data = _extract_nested_json(raw_data)
         if isinstance(data, dict):
-            return UIDesignerOutput.model_validate(data)
+            parsed_output = UIDesignerOutput.model_validate(data)
         else:
             raise ValueError("Parsed UI Designer output is not a dictionary.")
     except Exception as e:
         print(f"⚠️ [UIDesigner] Error parsing JSON output: {e}")
-        # Fallback empty UI
+
+    # Extract all screens created in the tools history
+    history_screens = _extract_screens_from_history(messages_list)
+    print(f"🎨 [UIDesigner] Found {len(history_screens)} screens designed in execution history.")
+    
+    if parsed_output:
+        # Merge screens from history and parsed_output based on stitch_screen_url
+        existing_urls = {s.stitch_screen_url for s in parsed_output.screens if s.stitch_screen_url}
+        for h_scr in history_screens:
+            if h_scr.stitch_screen_url not in existing_urls:
+                parsed_output.screens.append(h_scr)
+                existing_urls.add(h_scr.stitch_screen_url)
+        return parsed_output
+    else:
+        # Reconstruct UIDesignerOutput completely from history
+        print(f"🔄 [UIDesigner] Reconstructed screens from execution history.")
         return UIDesignerOutput(
             project_name=architect_output.project_name,
-            design_system_notes="Could not parse Stitch output.",
-            screens=[]
+            design_system_notes="Reconstructed from tools execution history.",
+            screens=history_screens
         )

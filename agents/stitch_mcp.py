@@ -25,7 +25,7 @@ def summarize_stitch_response(text: str) -> str:
                 cleaned = {}
                 for k, v in val.items():
                     # Keep important identifiers, names, descriptions, and statuses
-                    if k in ["name", "projectId", "sessionId", "title", "id", "visibility", "projectType", "description", "status", "type"]:
+                    if k in ["name", "projectId", "sessionId", "title", "id", "visibility", "projectType", "description", "status", "type", "screenshot", "stitch_screen_url", "screen_url", "url", "uri", "html", "html_content", "design_system_notes"]:
                         cleaned[k] = clean_val(v)
                     elif k in ["screens", "outputComponents", "components"] and isinstance(v, list):
                         cleaned[k] = [clean_val(item) for item in v]
