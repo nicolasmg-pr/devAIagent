@@ -178,7 +178,7 @@ async def enrich_with_context7(tech_stack: TechStack) -> dict:
         try:
             resolved_id = None
             if "resolve-library-id" in tool_map:
-                res = tool_map["resolve-library-id"].invoke({"query": tech_name})
+                res = tool_map["resolve-library-id"].invoke({"libraryName": tech_name})
                 import re
                 match = re.search(r"(/[a-zA-Z0-9_\-\.]+/[a-zA-Z0-9_\-\.]+)", res)
                 if match:
