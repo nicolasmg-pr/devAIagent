@@ -160,6 +160,38 @@ async def run_local_preview(developer_output: DeveloperOutput, project_name: str
         except Exception as e:
             print(f"   ⚠️  [DevOps] Could not write .env: {e}")
             
+        # Copy backend files for docker build
+        be_dir = os.path.join(out_dir, "backend")
+        os.makedirs(be_dir, exist_ok=True)
+        be_dockerfile = os.path.join(be_dir, "Dockerfile")
+        if not os.path.exists(be_dockerfile):
+            try:
+                with open(be_dockerfile, "w", encoding="utf-8") as f:
+                    f.write("FROM node:18-alpine\nWORKDIR /app\nCOPY package*.json ./\nRUN npm install\nCOPY . .\nRUN npm run build\nEXPOSE 3000\nCMD [\"npm\", \"run\", \"start:prod\"]\n")
+            except Exception as e:
+                print(f"   ⚠️  [DevOps] Could not write backend Dockerfile: {e}")
+                
+        try:
+            src_dest = os.path.join(be_dir, "src")
+            if os.path.exists(src_dest):
+                shutil.rmtree(src_dest)
+            shutil.copytree("src", src_dest)
+            shutil.copy("package.json", os.path.join(be_dir, "package.json"))
+            shutil.copy("tsconfig.json", os.path.join(be_dir, "tsconfig.json"))
+        except Exception as e:
+            print(f"   ⚠️  [DevOps] Error copying backend source files: {e}")
+            
+        # Copy frontend files for docker build
+        fe_dir = os.path.join(out_dir, "frontend")
+        os.makedirs(fe_dir, exist_ok=True)
+        fe_dockerfile = os.path.join(fe_dir, "Dockerfile")
+        if not os.path.exists(fe_dockerfile):
+            try:
+                with open(fe_dockerfile, "w", encoding="utf-8") as f:
+                    f.write("FROM nginx:alpine\nRUN mkdir -p /usr/share/nginx/html\nRUN echo '<h1>MarineCheck Pro Frontend Preview</h1><p>Flutter Web Build Placeholder</p>' > /usr/share/nginx/html/index.html\nEXPOSE 80\nCMD [\"nginx\", \"-g\", \"daemon off;\"]\n")
+            except Exception as e:
+                print(f"   ⚠️  [DevOps] Could not write frontend Dockerfile: {e}")
+                
         print("   🐳 [DevOps Option A] Docker available. Starting containers (docker compose up -d --build)...")
         # Check if we should use 'docker compose' or 'docker-compose'
         cmd = ["docker", "compose"]

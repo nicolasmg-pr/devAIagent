@@ -42,6 +42,9 @@ def main() -> None:
   ║    devAIteam deploy <project>      deploy project   ║
   ║    devAIteam rm <project>          delete local     ║
   ║    devAIteam rm <project> --all    delete all       ║
+  ║                                                     ║
+  ║  DIAGNOSTICS & SYSTEM:                              ║
+  ║    devAIteam doctor                check MCP tools  ║
   ╚══════════════════════════════════════════════════════╝
       """)
         print("🤖 Describe your project (or CTRL+C to exit):")
@@ -55,6 +58,12 @@ def main() -> None:
         args = [requirement]
 
     command = args[0].lower()
+
+    # devAIteam doctor / check / mcp
+    if command in ["doctor", "check", "mcp"]:
+        from deploy.mcp_runner import run_mcp_check
+        run_mcp_check()
+        return
 
     # devAIteam list
     if command == "list":
