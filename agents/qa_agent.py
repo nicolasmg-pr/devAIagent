@@ -29,7 +29,7 @@ class TestCase(BaseModel):
     steps: list[str] = Field(..., description="Steps to execute the test")
     expected_result: str = Field(..., description="Expected outcome")
     priority: str = Field(
-        ..., description='Priority: "critical", "high", "medium", or "low"'
+        default="medium", description='Priority: "critical", "high", "medium", or "low"'
     )
 
 

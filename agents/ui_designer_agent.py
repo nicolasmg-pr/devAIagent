@@ -54,6 +54,15 @@ from typing import Any
 
 def _extract_nested_json(data: Any) -> Any:
     """Helper to extract nested JSON string if the parsed output is wrapped in a JSON-RPC / content envelope."""
+    # Handle double-serialized or double-escaped strings
+    if isinstance(data, str):
+        data_stripped = data.strip()
+        if data_stripped.startswith("{") or data_stripped.startswith("["):
+            try:
+                data = json_repair.loads(clean_llm_response(data_stripped))
+            except Exception:
+                pass
+
     if isinstance(data, dict):
         if "result" in data:
             return _extract_nested_json(data["result"])
