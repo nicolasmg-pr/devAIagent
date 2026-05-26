@@ -4,28 +4,28 @@ import subprocess
 import signal
 
 def kill_mlx_server():
-    """Finds and terminates any running mlx_lm local server processes to free RAM."""
+    """Finds and terminates any running mlx_lm or oMLX local server processes to free RAM."""
     try:
         res = subprocess.run(["ps", "-ef"], capture_output=True, text=True)
         lines = res.stdout.splitlines()
         killed = False
         for line in lines:
-            if "mlx_lm" in line and "grep" not in line:
+            if ("mlx_lm" in line or "oMLX" in line) and "grep" not in line:
                 parts = line.split()
                 if len(parts) >= 2:
                     pid = int(parts[1])
-                    print(f"💀 [Cleanup] Terminating local MLX server process (PID {pid})...")
+                    print(f"💀 [Cleanup] Terminating local MLX/oMLX server process (PID {pid})...")
                     try:
                         os.kill(pid, signal.SIGTERM)
                         killed = True
                     except ProcessLookupError:
                         pass
         if killed:
-            print("✅ [Cleanup] Local MLX server successfully stopped. ~20GB RAM reclaimed!")
+            print("✅ [Cleanup] Local MLX/oMLX server successfully stopped. ~20GB RAM reclaimed!")
         else:
-            print("ℹ️ [Cleanup] No active local MLX server process was found.")
+            print("ℹ️ [Cleanup] No active local MLX or oMLX server process was found.")
     except Exception as e:
-        print(f"⚠️ [Cleanup] Error stopping MLX server: {e}")
+        print(f"⚠️ [Cleanup] Error stopping MLX/oMLX server: {e}")
 
 def run_clean_command():
     """Stops all running Docker Compose previews and terminates the local MLX server."""
