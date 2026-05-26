@@ -290,6 +290,43 @@ async def save_files_to_filesystem(developer_output: DeveloperOutput):
         except Exception as e:
             print(f"❌ Error writing local fallback file: {e}")
 
+    # ── Safe Setup Command Execution ─────────────────────────────────────────
+    try:
+        base_dir = "/Users/nikomendez/Documents/SWdevAIgency_project"
+        safe_commands = []
+        all_cmds = []
+        if developer_output.backend and developer_output.backend.setup_commands:
+            all_cmds.extend(developer_output.backend.setup_commands)
+        if developer_output.frontend and developer_output.frontend.setup_commands:
+            all_cmds.extend(developer_output.frontend.setup_commands)
+            
+        for cmd in all_cmds:
+            cmd_lower = cmd.lower().strip()
+            # Whitelist safe dependencies installation and client generation commands
+            if any(k in cmd_lower for k in ["install", "pub get", "generate", "ci", "build"]):
+                # Exclude interactive/blocking server/migration commands to prevent hangs
+                if not any(b in cmd_lower for b in ["start", "run", "watch", "migrate"]):
+                    safe_commands.append(cmd)
+                    
+        if safe_commands:
+            print(f"\n📦 [Setup] Detected {len(safe_commands)} safe setup commands to automatically execute...")
+            for cmd in safe_commands:
+                print(f"⚙️ [Setup] Running: {cmd} ...")
+                proc = await asyncio.create_subprocess_shell(
+                    cmd,
+                    cwd=base_dir,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+                stdout, stderr = await proc.communicate()
+                if proc.returncode == 0:
+                    print(f"✅ [Setup] Successfully completed: {cmd}")
+                else:
+                    err_msg = stderr.decode().strip() or stdout.decode().strip()
+                    print(f"⚠️ [Setup] '{cmd}' finished or warned: {err_msg[:200]}")
+    except Exception as exc:
+        print(f"⚠️ [Setup] Error executing safe setup commands: {exc}")
+
 
 def run_backend_agent(architect_output: ArchitectOutput, designer_output: Optional[UIDesignerOutput] = None) -> BackendOutput:
     """Generate backend code from the architect's output and write files to disk."""
