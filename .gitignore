@@ -66,4 +66,4 @@ Thumbs.db
 Desktop.ini
 
 # Project local artifacts & caches
-output/.registry.json
+output/
