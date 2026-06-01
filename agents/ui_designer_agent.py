@@ -175,7 +175,7 @@ def run_ui_designer_agent(architect_output: ArchitectOutput, stitch_api_key: str
     prompt = f"{UIDESIGNER_SYSTEM_PROMPT}\n\nHere is the system architecture:\n{arch_json}\n\nUse Stitch tools to generate the screens, and then return the structured JSON."
     
     print("🎨 [UIDesigner] Generating screens with Google Stitch...")
-    response = agent.invoke({"messages": [HumanMessage(content=prompt)]}, config={"recursion_limit": 25})
+    response = agent.invoke({"messages": [HumanMessage(content=prompt)]}, config={"recursion_limit": 100})
     
     # Search backwards for the last AIMessage to get the LLM's final structured text
     final_message = ""
